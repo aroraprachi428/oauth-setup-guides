@@ -1,0 +1,153 @@
+{
+  "slug": "sample-guide",
+  "app": {
+    "name": "Sample Provider (FAKE FIXTURE)",
+    "website": "https://example.com",
+    "category": "Fixture",
+    "developerPortalUrl": "https://example.com/developers/apps",
+    "primaryDocsUrl": "https://example.com/docs/oauth"
+  },
+  "source": "curated",
+  "version": 1,
+  "lastVerified": "2026-10-23",
+  "oauthSupport": "public",
+  "technical": {
+    "authorizationUrl": "https://example.com/oauth/authorize",
+    "tokenUrl": "https://example.com/oauth/token",
+    "oauthVersion": "2.0",
+    "pkce": "supported",
+    "clientSecretHandling": "Fixture text: keep the client secret on your server only.",
+    "refreshTokens": { "supported": true, "expiry": "Fixture: 90 days of inactivity", "notes": "Fixture: rotates on use." },
+    "accessTokenLifetime": "Fixture: 4 hours",
+    "redirectUriRules": ["Fixture: HTTPS only", "Fixture: exact match"],
+    "claimIds": ["c-tokens"]
+  },
+  "profiles": [
+    {
+      "id": "files-rw",
+      "intent": "Fixture intent: read and write a user's files",
+      "audience": "public_multi_tenant",
+      "scopes": [{ "name": "files.read", "purpose": "Fixture: list and download files", "claimIds": ["c-scopes"] }],
+      "facts": {
+        "selfServeCreation": { "value": true, "claimIds": ["c-create"] },
+        "requiresAppReview": { "value": true, "claimIds": ["c-review"] },
+        "requiresSecurityAssessment": { "value": false, "claimIds": ["c-review"] },
+        "requiresBusinessVerification": { "value": false, "claimIds": [] },
+        "requiresDomainVerification": { "value": "unknown", "claimIds": [] },
+        "partnerProgramGated": { "value": false, "claimIds": [] },
+        "paidAccessRequired": { "value": false, "claimIds": [] },
+        "legalEntityRequired": { "value": false, "claimIds": [] },
+        "marketplaceListingOptional": { "value": true, "claimIds": [] },
+        "testModeLimits": { "text": "Fixture: 50 users before review", "claimIds": ["c-cap"] },
+        "configGotchas": []
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Fixture: self-serve app creation.",
+          "time": { "range": "Fixture: 10–30 minutes", "basis": "official", "claimIds": ["c-create"] },
+          "claimIds": ["c-create"]
+        },
+        "stage2": {
+          "band": "Days",
+          "summary": "Fixture: a review is required past the user cap.",
+          "time": { "range": null, "basis": "unknown", "claimIds": [] },
+          "claimIds": ["c-review", "c-cap"]
+        }
+      },
+      "blockerTags": ["user_cap", "review"],
+      "stage1DoneWhen": { "text": "Fixture: the token endpoint returns an access_token.", "claimIds": ["c-tokens"] },
+      "blockedBy": [{ "party": "provider", "how": "Fixture: rejects the review.", "claimIds": ["c-review"] }],
+      "stepIds": ["create-app", "submit-review"],
+      "requirementIds": ["privacy-policy"],
+      "limitIds": ["user-cap"],
+      "blockerIds": ["cap-hit"],
+      "bottomLine": "Fixture: easy to start, review before scale.",
+      "topRisks": ["Fixture risk"]
+    }
+  ],
+  "defaultProfileId": "files-rw",
+  "steps": [
+    {
+      "id": "create-app",
+      "stage": 1,
+      "title": "Fixture: create the app",
+      "owner": "developer",
+      "instructions": ["Fixture: open the console.", "Fixture: click Create app."],
+      "links": [{ "label": "Console", "url": "https://example.com/developers/apps" }],
+      "estimateMinutes": 10,
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": ["c-create"]
+    },
+    {
+      "id": "submit-review",
+      "stage": 2,
+      "title": "Fixture: submit for review",
+      "owner": "developer",
+      "instructions": ["Fixture: click Apply for production."],
+      "links": [],
+      "humanGate": "review_submission",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-review"]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "privacy-policy",
+      "label": "Fixture: privacy policy URL",
+      "detail": "Fixture detail.",
+      "howToPrepare": "Fixture: host it on your domain.",
+      "agentCanDraft": true,
+      "claimIds": ["c-review"]
+    }
+  ],
+  "limits": [
+    { "id": "user-cap", "what": "Fixture: linked users", "value": "50", "whenHit": "Fixture: new links blocked.", "claimIds": ["c-cap"] }
+  ],
+  "blockers": [
+    { "id": "cap-hit", "symptom": "Fixture: users can't connect", "cause": "Fixture: cap reached", "fix": "Fixture: get approved", "claimIds": ["c-cap"] }
+  ],
+  "nuances": [{ "id": "rotation", "text": "Fixture: refresh tokens rotate.", "claimIds": ["c-tokens"] }],
+  "notFound": [{ "item": "Fixture: review duration", "why": "Fixture: not documented", "claimIds": ["c-unsourced"] }],
+  "claims": [
+    {
+      "id": "c-create",
+      "statement": "Fixture: apps are self-serve.",
+      "label": "verified",
+      "sources": [{ "url": "https://example.com/docs/oauth", "title": "Fixture docs", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }]
+    },
+    {
+      "id": "c-scopes",
+      "statement": "Fixture: files.read lists files.",
+      "label": "verified",
+      "sources": [{ "url": "https://example.com/docs/scopes", "title": "Fixture scopes", "kind": "official", "read": "full", "retrievedAt": "2026-10-23", "quote": "short fixture quote" }]
+    },
+    {
+      "id": "c-tokens",
+      "statement": "Fixture: refresh tokens rotate.",
+      "label": "verified",
+      "sources": [{ "url": "https://example.com/docs/tokens", "title": "Fixture tokens", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }]
+    },
+    {
+      "id": "c-review",
+      "statement": "Fixture: review is required.",
+      "label": "reported",
+      "sources": [{ "url": "https://example.org/forum/1", "title": "Fixture forum", "kind": "community", "read": "full", "retrievedAt": "2026-10-23" }]
+    },
+    {
+      "id": "c-cap",
+      "statement": "Fixture: cap is 50 users.",
+      "label": "uncertain",
+      "sources": [{ "url": "https://example.com/blocked", "title": "Fixture blocked page", "kind": "official", "read": "unfetchable", "retrievedAt": "2026-10-23" }]
+    },
+    {
+      "id": "c-unsourced",
+      "statement": "Fixture: review takes about a week.",
+      "label": "uncertain",
+      "sources": [],
+      "unsourced": true
+    }
+  ]
+}

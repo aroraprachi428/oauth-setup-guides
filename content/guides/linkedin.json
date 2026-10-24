@@ -1,0 +1,1780 @@
+{
+  "slug": "linkedin",
+  "app": {
+    "name": "LinkedIn",
+    "website": "https://www.linkedin.com",
+    "category": "Social",
+    "developerPortalUrl": "https://www.linkedin.com/developers/apps",
+    "primaryDocsUrl": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow"
+  },
+  "source": "curated",
+  "version": 1,
+  "lastVerified": "2026-10-23",
+  "oauthSupport": "public",
+  "technical": {
+    "authorizationUrl": "https://www.linkedin.com/oauth/v2/authorization",
+    "tokenUrl": "https://www.linkedin.com/oauth/v2/accessToken",
+    "discoveryUrl": "https://www.linkedin.com/oauth/.well-known/openid-configuration",
+    "oauthVersion": "2.0",
+    "pkce": "supported",
+    "clientSecretHandling": "Web apps send client_id and client_secret as form fields (application/x-www-form-urlencoded) to the token endpoint. Never put the secret in a URL or query string. PKCE without a secret is native-only, on a separate native-pkce endpoint that LinkedIn must enable for your app.",
+    "refreshTokens": {
+      "supported": false,
+      "notes": "Programmatic refresh tokens are limited to approved Marketing Developer Platform partners, so a Share on LinkedIn app shouldn't expect a refresh_token. The documented path is to send the member through authorization again: if they are still signed in to LinkedIn and the token hasn't expired, the consent screen is skipped. For partners, refresh tokens last 365 days and are not extended when used."
+    },
+    "accessTokenLifetime": "60 days (expires_in 5184000 seconds)",
+    "redirectUriRules": [
+      "Must match one of the redirect URLs registered on the app's Auth tab",
+      "Must be absolute and HTTPS (e.g. https://dev.example.com/auth/linkedin/callback)",
+      "Query parameters are ignored when matching; URLs containing # are invalid",
+      "Native PKCE apps may only use loopback IPs (http(s)://127.0.0.1:{port} or http(s)://[::1]:{port})",
+      "Whether http://localhost works for the standard web flow is not documented"
+    ],
+    "claimIds": [
+      "c-authorize-url",
+      "c-token-url",
+      "c-oidc-discovery",
+      "c-secret",
+      "c-pkce-native",
+      "c-refresh-partners",
+      "c-reauth-silent",
+      "c-token-60d",
+      "c-redirect-rules"
+    ]
+  },
+  "profiles": [
+    {
+      "id": "member-posting",
+      "intent": "Post on behalf of members (any LinkedIn member posting to their own profile)",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "openid",
+          "purpose": "Turns on Sign In with LinkedIn using OpenID Connect and returns an ID token",
+          "claimIds": [
+            "c-oidc-scopes"
+          ]
+        },
+        {
+          "name": "profile",
+          "purpose": "Member's name and photo, plus the sub identifier from /v2/userinfo used to build the post author",
+          "claimIds": [
+            "c-oidc-scopes",
+            "c-userinfo"
+          ]
+        },
+        {
+          "name": "email",
+          "purpose": "Optional: the member's primary email (may be missing from responses)",
+          "claimIds": [
+            "c-oidc-scopes",
+            "c-userinfo"
+          ]
+        },
+        {
+          "name": "w_member_social",
+          "purpose": "Create, comment on and like posts as the signed-in member (granted by the Share on LinkedIn product)",
+          "claimIds": [
+            "c-sol-product",
+            "c-open-permissions"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-create-app",
+            "c-open-permissions"
+          ]
+        },
+        "requiresAppReview": {
+          "value": false,
+          "claimIds": [
+            "c-open-permissions",
+            "c-instant-grant"
+          ]
+        },
+        "requiresSecurityAssessment": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "requiresBusinessVerification": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": [
+            "c-open-permissions"
+          ]
+        },
+        "paidAccessRequired": {
+          "value": false,
+          "claimIds": [
+            "c-terms-fees"
+          ]
+        },
+        "legalEntityRequired": {
+          "value": false,
+          "claimIds": [
+            "c-terms-individual",
+            "c-cm-legal-entity"
+          ]
+        },
+        "marketplaceListingOptional": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "No development mode or user cap is documented for Share on LinkedIn. The limits that apply are 150 requests per member per day and 100,000 per app per day.",
+          "claimIds": [
+            "c-sol-rate-limits",
+            "c-open-permissions"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "Every app is tied to a LinkedIn Page at creation, and you can never move it to another Page.",
+            "stepId": "have-page",
+            "claimIds": [
+              "c-default-page",
+              "c-page-permanent"
+            ]
+          },
+          {
+            "text": "Requesting a different scope set invalidates all of a member's earlier tokens.",
+            "claimIds": [
+              "c-scope-invalidates"
+            ]
+          },
+          {
+            "text": "Posts API calls fail without a LinkedIn-Version header (YYYYMM), and also fail with a sunset version.",
+            "stepId": "check-token",
+            "claimIds": [
+              "c-posts-headers",
+              "c-version-required"
+            ]
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Same day",
+          "summary": "Self-serve. You need a LinkedIn Page for the app, then you add the two open products and complete one code flow. The only wait is a Page super admin approving the app, and that is immediate if the super admin is you.",
+          "time": {
+            "range": "Under an hour if you are the Page's super admin",
+            "basis": "community",
+            "claimIds": [
+              "c-instant-grant"
+            ]
+          },
+          "claimIds": [
+            "c-create-app",
+            "c-default-page",
+            "c-page-admin-approval",
+            "c-open-permissions",
+            "c-instant-grant"
+          ]
+        },
+        "stage2": {
+          "band": "None documented",
+          "summary": "w_member_social is an open permission. No app review, partner program or legal entity is documented for it, and Share on LinkedIn has no user cap. What limits production is the 60-day token with no refresh token, per-member daily rate limits, and an API Terms clause against automating posting.",
+          "time": {
+            "range": null,
+            "basis": "unknown",
+            "claimIds": []
+          },
+          "claimIds": [
+            "c-open-permissions",
+            "c-refresh-partners",
+            "c-sol-rate-limits",
+            "c-terms-automation"
+          ]
+        }
+      },
+      "blockerTags": [
+        "none"
+      ],
+      "stage1DoneWhen": {
+        "text": "GET https://api.linkedin.com/v2/userinfo with your bearer token returns 200 with a sub. Then POST https://api.linkedin.com/rest/posts with author urn:li:person:{sub}, X-Restli-Protocol-Version: 2.0.0 and a current LinkedIn-Version header returns 201 with the post URN in x-restli-id.",
+        "claimIds": [
+          "c-userinfo",
+          "c-posts-create",
+          "c-posts-headers",
+          "c-sub-person-urn"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "tenant_admin",
+          "how": "A super admin of the LinkedIn Page you pick has 30 days to approve or deny associating your app with it, and also approves the separate Verify request. This is your own Page's admin, not each end user's.",
+          "claimIds": [
+            "c-page-admin-approval",
+            "c-verify-flow"
+          ]
+        },
+        {
+          "party": "provider",
+          "how": "LinkedIn can suspend or end API access at any time. Its API Terms forbid using the APIs to automate posting, and an over-limit app gets 429 until the daily reset.",
+          "claimIds": [
+            "c-terms-revoke",
+            "c-terms-automation",
+            "c-rate-limits-general"
+          ]
+        },
+        {
+          "party": "you",
+          "how": "Without a refresh token you must bring every member back through authorization before their 60 days run out. You also have to keep the LinkedIn-Version header on a version that hasn't been sunset.",
+          "claimIds": [
+            "c-refresh-partners",
+            "c-token-60d",
+            "c-version-required"
+          ]
+        }
+      ],
+      "stepIds": [
+        "have-page",
+        "create-app",
+        "verify-page",
+        "add-products",
+        "add-redirect",
+        "copy-credentials",
+        "authorize",
+        "exchange-code",
+        "check-token",
+        "terms-check",
+        "reauth-plan",
+        "pin-version",
+        "watch-limits"
+      ],
+      "requirementIds": [
+        "linkedin-page",
+        "page-admin",
+        "privacy-policy",
+        "app-logo",
+        "terms-acceptance"
+      ],
+      "limitIds": [
+        "member-daily",
+        "app-daily",
+        "token-60d",
+        "auth-code-30m",
+        "page-permanent"
+      ],
+      "blockerIds": [
+        "redirect-mismatch",
+        "invalid-scope",
+        "post-403",
+        "version-error",
+        "rate-429",
+        "token-expired",
+        "tokens-invalidated"
+      ],
+      "bottomLine": "Member posting is self-serve, and its permissions are open to all developers. The Community Management requirements (legal entity, screencast, vetting) don't apply. The real work is keeping members connected: tokens last 60 days with no refresh token, and the API Terms forbid automating posting.",
+      "topRisks": [
+        "No refresh token for non-partners, so every member must re-authorize within 60 days",
+        "API Terms 3.1(26) prohibits using the APIs to automate posting, which matters for agent-driven posting",
+        "The app is permanently tied to the LinkedIn Page chosen at creation"
+      ]
+    }
+  ],
+  "defaultProfileId": "member-posting",
+  "steps": [
+    {
+      "id": "have-page",
+      "stage": 1,
+      "title": "Pick or create the LinkedIn Page the app will belong to",
+      "owner": "developer",
+      "instructions": [
+        "Decide which LinkedIn Page will publish the app. The create form has a required-looking LinkedIn Page field and offers Create a new LinkedIn Page if you have none.",
+        "Choose carefully: an app can never be transferred to another Page. A merger, rebrand or lost Page access means creating new apps.",
+        "If you aren't a super admin of that Page, find out who is. They must approve the association within 30 days."
+      ],
+      "links": [
+        {
+          "label": "Associate an app with a LinkedIn Page",
+          "url": "https://www.linkedin.com/help/linkedin/answer/a548360/associate-an-app-with-a-linkedin-page?lang=en"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-default-page",
+        "c-page-permanent",
+        "c-page-admin-approval",
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "create-app",
+      "stage": 1,
+      "title": "Create the app in the Developer Portal",
+      "owner": "developer",
+      "instructions": [
+        "Sign in at https://www.linkedin.com/developers/apps (My apps) and click Create app.",
+        "On Create an app, fill in App name, LinkedIn Page (Page name or URL), and Privacy policy URL.",
+        "Click Upload a logo. Members see this image on the consent screen. The file has to be local; size and format rules were not found in official docs.",
+        "Don't put LinkedIn or Microsoft names or logos in the app name or logo.",
+        "Tick I have read and agree to these terms, then click Create app. The app appears under My apps."
+      ],
+      "links": [
+        {
+          "label": "Create a new app for a LinkedIn Page",
+          "url": "https://www.linkedin.com/help/learning/answer/a1667239"
+        },
+        {
+          "label": "Developer Portal",
+          "url": "https://www.linkedin.com/developers/apps"
+        }
+      ],
+      "humanGate": "legal_attestation",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-create-app",
+        "c-cm-legal-entity"
+      ]
+    },
+    {
+      "id": "verify-page",
+      "stage": 1,
+      "title": "Get the Page super admin to verify the app",
+      "owner": "developer",
+      "instructions": [
+        "On the app's Settings tab, click Verify, then Generate URL in the Verify company dialog.",
+        "Click Copy URL, send the link to the Page super admin by email or LinkedIn message, then click I'm done.",
+        "The super admin opens the link, signs in and approves or denies. The link lasts 30 days, and a denial invalidates every link generated for the app.",
+        "Verification is required only for some products, but it's cheap and some products need it, so do it early."
+      ],
+      "links": [
+        {
+          "label": "Send an app verification request",
+          "url": "https://www.linkedin.com/help/learning/answer/a1665329"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-verify-flow",
+        "c-verify-scope",
+        "c-instant-grant"
+      ]
+    },
+    {
+      "id": "add-products",
+      "stage": 1,
+      "title": "Add Share on LinkedIn and Sign In with LinkedIn using OpenID Connect",
+      "owner": "developer",
+      "instructions": [
+        "Open the app's Products tab.",
+        "Add Share on LinkedIn, which grants w_member_social.",
+        "Add Sign In with LinkedIn using OpenID Connect, which grants openid, profile and email.",
+        "Accept any product terms shown. Both products are granted at once with no review queue.",
+        "Do not add Community Management API to this app. It's a separate vetted product and can't share an app with other products."
+      ],
+      "links": [
+        {
+          "label": "Getting access (open permissions)",
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access"
+        },
+        {
+          "label": "Share on LinkedIn",
+          "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin"
+        }
+      ],
+      "humanGate": "legal_attestation",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-open-permissions",
+        "c-sol-product",
+        "c-oidc-scopes",
+        "c-instant-grant",
+        "c-cm-exclusive"
+      ]
+    },
+    {
+      "id": "add-redirect",
+      "stage": 1,
+      "title": "Register the redirect URL on the Auth tab",
+      "owner": "agent",
+      "instructions": [
+        "Open the app's Auth tab and add your callback under redirect URLs.",
+        "Use an absolute HTTPS URL with no #fragment. Query parameters are ignored when matching.",
+        "For Postman testing, use https://oauth.pstmn.io/v1/callback.",
+        "Check that the Auth tab lists openid, profile, email and w_member_social. Those are the only scopes you can request."
+      ],
+      "links": [
+        {
+          "label": "3-legged OAuth flow",
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-redirect-rules",
+        "c-auth-tab-scopes"
+      ]
+    },
+    {
+      "id": "copy-credentials",
+      "stage": 1,
+      "title": "Copy the Client ID and Client Secret",
+      "owner": "developer",
+      "instructions": [
+        "On the Auth tab, copy the Client ID and Client Secret.",
+        "Keep the secret on your server or in a secret manager. Never put it in a URL or query string, or post it in forums."
+      ],
+      "links": [],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-secret"
+      ]
+    },
+    {
+      "id": "authorize",
+      "stage": 1,
+      "title": "Send the member through the authorization URL",
+      "owner": "developer",
+      "instructions": [
+        "Open https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=CLIENT_ID&redirect_uri=YOUR_URL&state=RANDOM&scope=openid%20profile%20email%20w_member_social",
+        "The member must accept all requested scopes; they can't pick a subset. Request only what you need.",
+        "The member signs in (password, Google, Apple or passkey on desktop and Android web) and clicks Allow.",
+        "LinkedIn redirects with code and state. Reject the response if state doesn't match. If the member cancels, you get error=user_cancelled_login or user_cancelled_authorize instead.",
+        "Sign in as the member who will post. The token belongs to whoever authorizes, not to the app owner."
+      ],
+      "links": [
+        {
+          "label": "3-legged OAuth flow",
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow"
+        }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-authorize-url",
+        "c-scope-all-or-nothing",
+        "c-state",
+        "c-auth-errors",
+        "c-checkpoint"
+      ]
+    },
+    {
+      "id": "exchange-code",
+      "stage": 1,
+      "title": "Exchange the code for an access token",
+      "owner": "agent",
+      "instructions": [
+        "Within 30 minutes, POST to https://www.linkedin.com/oauth/v2/accessToken with Content-Type application/x-www-form-urlencoded.",
+        "Send grant_type=authorization_code, code, client_id, client_secret and the same redirect_uri.",
+        "Store access_token (allow up to 1000 characters) and expires_in, which is 60 days. Expect no refresh_token unless LinkedIn has enabled programmatic refresh for your app."
+      ],
+      "links": [
+        {
+          "label": "3-legged OAuth flow",
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-token-url",
+        "c-auth-code-30m",
+        "c-token-60d",
+        "c-token-length",
+        "c-refresh-partners"
+      ]
+    },
+    {
+      "id": "check-token",
+      "stage": 1,
+      "title": "Read the member id and publish a test post",
+      "owner": "agent",
+      "instructions": [
+        "GET https://api.linkedin.com/v2/userinfo with Authorization: Bearer TOKEN. Expect 200 with sub, name and, optionally, email.",
+        "POST https://api.linkedin.com/rest/posts with headers X-Restli-Protocol-Version: 2.0.0, Linkedin-Version: YYYYMM (a version not yet sunset) and Content-Type: application/json.",
+        "Body: author urn:li:person:{sub}, commentary, visibility, distribution.feedDistribution MAIN_FEED, and lifecycleState PUBLISHED. Use CONNECTIONS visibility if the test shouldn't be public (CONNECTIONS is documented for ugcPosts; not checked against the Posts schema).",
+        "Expect 201 with the post URN in the x-restli-id header. Clean up with DELETE https://api.linkedin.com/rest/posts/{encoded URN}, which returns 204."
+      ],
+      "links": [
+        {
+          "label": "Sign In with LinkedIn using OpenID Connect",
+          "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2"
+        },
+        {
+          "label": "Posts API",
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-userinfo",
+        "c-posts-create",
+        "c-posts-headers",
+        "c-sub-person-urn",
+        "c-sol-ugc",
+        "c-posts-delete"
+      ]
+    },
+    {
+      "id": "terms-check",
+      "stage": 2,
+      "title": "Check your posting flow against the API Terms",
+      "owner": "developer",
+      "instructions": [
+        "API Terms 3.1(26) prohibits using the APIs to automate posting on LinkedIn. Design the flow so each post comes from a member's own action, and get a legal reading if an agent posts on a schedule.",
+        "Pre-filled post text needs a clear notice and must stay editable by the member (3.1(4)).",
+        "Get valid consent before accessing a member's content (5.2)."
+      ],
+      "links": [
+        {
+          "label": "LinkedIn API Terms of Use",
+          "url": "https://www.linkedin.com/legal/l/api-terms-of-use"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-terms-automation",
+        "c-terms-prefill",
+        "c-terms-revoke"
+      ]
+    },
+    {
+      "id": "reauth-plan",
+      "stage": 2,
+      "title": "Plan for re-authorization every 60 days",
+      "owner": "developer",
+      "instructions": [
+        "Track each member's expires_in and send them back through authorization before it runs out.",
+        "If the member is still signed in to LinkedIn and the token hasn't expired, LinkedIn skips the consent screen and redirects straight back.",
+        "Handle 401 by restarting authorization. Tokens also die on revocation, on a scope change, or when a newer flow issues a token."
+      ],
+      "links": [
+        {
+          "label": "Refresh tokens (partners only)",
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-refresh-tokens"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-reauth-silent",
+        "c-refresh-partners",
+        "c-token-invalid-reasons"
+      ]
+    },
+    {
+      "id": "pin-version",
+      "stage": 2,
+      "title": "Pin and maintain the LinkedIn-Version header",
+      "owner": "agent",
+      "instructions": [
+        "Send a LinkedIn-Version header on every /rest call. The latest version is not applied by default, and a missing header returns an error.",
+        "Versions ship monthly and are supported for at least a year. Move to a newer one before yours is sunset (202511 sunsets on 2026-11-16)."
+      ],
+      "links": [
+        {
+          "label": "API versioning",
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/versioning"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-version-required",
+        "c-version-sunset"
+      ]
+    },
+    {
+      "id": "watch-limits",
+      "stage": 2,
+      "title": "Watch rate limits in the Analytics tab",
+      "owner": "agent",
+      "instructions": [
+        "The Share on LinkedIn docs list 150 requests per member and 100,000 per app per day, resetting at midnight UTC.",
+        "Standard per-endpoint limits aren't published. Make one call to an endpoint, then read its limit on the app's Analytics tab.",
+        "Developer admins get an email, 1 to 2 hours late, when the app passes 75% of an app-level quota. Member-level breaches send no email."
+      ],
+      "links": [
+        {
+          "label": "Rate limiting",
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/api-guide/concepts/rate-limits"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-sol-rate-limits",
+        "c-rate-limits-general",
+        "c-rate-alerts"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "linkedin-page",
+      "label": "LinkedIn Page",
+      "detail": "Every app is created against a LinkedIn Page, and the association is permanent.",
+      "howToPrepare": "Use your company's Page, or create one from the Create app form. Pick the Page you'll keep long-term.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-default-page",
+        "c-page-permanent",
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "page-admin",
+      "label": "Page super admin approval",
+      "detail": "A Page super admin approves the app association (within 30 days) and the separate Verify request.",
+      "howToPrepare": "Be a super admin yourself, or line up the person who is before you start.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-page-admin-approval",
+        "c-verify-flow"
+      ]
+    },
+    {
+      "id": "privacy-policy",
+      "label": "Privacy policy URL",
+      "detail": "A field on the Create an app form.",
+      "howToPrepare": "Host a policy that covers the LinkedIn data you use (profile, email, posts).",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "app-logo",
+      "label": "App logo",
+      "detail": "Shown to members on the consent screen. Size and format rules weren't found in official docs.",
+      "howToPrepare": "Use your product logo, without LinkedIn or Microsoft marks.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-create-app",
+        "c-cm-legal-entity"
+      ]
+    },
+    {
+      "id": "terms-acceptance",
+      "label": "Acceptance of the API Terms",
+      "detail": "The create form needs the terms checkbox, and the terms bind you, including the clause against automated posting.",
+      "howToPrepare": "Read the API Terms of Use before creating the app. If you register for a company, make sure you have authority to bind it.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-create-app",
+        "c-terms-individual",
+        "c-terms-automation"
+      ]
+    }
+  ],
+  "limits": [
+    {
+      "id": "member-daily",
+      "what": "Share on LinkedIn requests per member",
+      "value": "150 per day (UTC)",
+      "whenHit": "Requests return 429 until the midnight UTC reset. Member-level breaches send no alert email.",
+      "claimIds": [
+        "c-sol-rate-limits",
+        "c-rate-limits-general",
+        "c-rate-alerts"
+      ]
+    },
+    {
+      "id": "app-daily",
+      "what": "Share on LinkedIn requests per app",
+      "value": "100,000 per day (UTC)",
+      "whenHit": "Requests return 429 until the midnight UTC reset. Admins are emailed at 75% of an app-level quota.",
+      "claimIds": [
+        "c-sol-rate-limits",
+        "c-rate-limits-general",
+        "c-rate-alerts"
+      ]
+    },
+    {
+      "id": "token-60d",
+      "what": "Access token lifetime",
+      "value": "60 days, with no refresh token for non-partner apps",
+      "whenHit": "API calls return 401. Send the member through authorization again, which is silent if they are still signed in and the token hasn't expired.",
+      "claimIds": [
+        "c-token-60d",
+        "c-refresh-partners",
+        "c-reauth-silent",
+        "c-token-invalid-reasons"
+      ]
+    },
+    {
+      "id": "auth-code-30m",
+      "what": "Authorization code lifetime",
+      "value": "30 minutes",
+      "whenHit": "The token exchange fails with invalid_redirect_uri (code expired). Restart authorization.",
+      "claimIds": [
+        "c-auth-code-30m",
+        "c-token-errors"
+      ]
+    },
+    {
+      "id": "page-permanent",
+      "what": "App-to-Page association",
+      "value": "Permanent; can't be moved to another Page",
+      "whenHit": "Create a new app under the new Page. Members must authorize it again (inferred: a new app has a new client).",
+      "claimIds": [
+        "c-page-permanent"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "id": "redirect-mismatch",
+      "symptom": "401 Redirect_uri doesn't match on the authorize page",
+      "cause": "redirect_uri isn't registered on the Auth tab exactly",
+      "fix": "Register the absolute HTTPS URL on the Auth tab and send the identical value",
+      "stepId": "add-redirect",
+      "claimIds": [
+        "c-auth-errors",
+        "c-redirect-rules"
+      ]
+    },
+    {
+      "id": "invalid-scope",
+      "symptom": "401 Invalid scope on the authorize page",
+      "cause": "A requested scope isn't assigned to the app, usually because the product wasn't added",
+      "fix": "Add Share on LinkedIn and Sign In with LinkedIn using OpenID Connect on the Products tab, then check the Auth tab scope list",
+      "stepId": "add-redirect",
+      "claimIds": [
+        "c-auth-errors",
+        "c-auth-tab-scopes"
+      ]
+    },
+    {
+      "id": "post-403",
+      "symptom": "403 ACCESS_DENIED from POST /rest/posts",
+      "cause": "Missing w_member_social, or an author that isn't the signed-in member (LinkedIn's samples use organization authors)",
+      "fix": "Request w_member_social and set author to urn:li:person:{sub} of the token's member",
+      "stepId": "check-token",
+      "claimIds": [
+        "c-posts-errors",
+        "c-posts-create",
+        "c-sub-person-urn"
+      ]
+    },
+    {
+      "id": "version-error",
+      "symptom": "Error response from /rest endpoints about the version",
+      "cause": "LinkedIn-Version header missing or set to a sunset version",
+      "fix": "Send a supported YYYYMM version and upgrade at least yearly",
+      "stepId": "pin-version",
+      "claimIds": [
+        "c-version-required",
+        "c-version-sunset"
+      ]
+    },
+    {
+      "id": "rate-429",
+      "symptom": "429 TOO_MANY_REQUESTS",
+      "cause": "The daily member or app limit was exceeded, or infrastructure protection kicked in",
+      "fix": "Back off until the midnight UTC reset and check the Analytics tab",
+      "stepId": "watch-limits",
+      "claimIds": [
+        "c-rate-limits-general",
+        "c-posts-errors"
+      ]
+    },
+    {
+      "id": "token-expired",
+      "symptom": "401 on API calls about two months after connecting",
+      "cause": "The 60-day access token expired and there is no refresh token",
+      "fix": "Send the member through authorization again",
+      "stepId": "exchange-code",
+      "claimIds": [
+        "c-token-60d",
+        "c-refresh-partners",
+        "c-token-invalid-reasons"
+      ]
+    },
+    {
+      "id": "tokens-invalidated",
+      "symptom": "A member's older tokens suddenly return 401",
+      "cause": "A flow requested a different scope set, which invalidates earlier tokens",
+      "fix": "Request one consistent scope set everywhere",
+      "stepId": "reauth-plan",
+      "claimIds": [
+        "c-scope-invalidates",
+        "c-token-invalid-reasons"
+      ]
+    }
+  ],
+  "nuances": [
+    {
+      "id": "member-vs-org",
+      "text": "Posting as a member (Share on LinkedIn, w_member_social) is an open, self-serve permission. Posting as an organization (w_organization_social, Community Management API) is a separate product. It requires a registered legal organization, a verified business email, a Page-verified app, and a screencast plus test credentials for the Standard tier.",
+      "stepId": "create-app",
+      "claimIds": [
+        "c-open-permissions",
+        "c-cm-legal-entity",
+        "c-cm-standard",
+        "c-posts-permissions"
+      ]
+    },
+    {
+      "id": "cm-reapply",
+      "text": "For Community Management, a rejected app can't re-apply; create a new app and submit a new Development tier request. Share on LinkedIn has no review.",
+      "claimIds": [
+        "c-cm-reapply"
+      ]
+    },
+    {
+      "id": "ugc-vs-posts",
+      "text": "Use POST /rest/posts with a LinkedIn-Version header for new code. /v2/ugcPosts still works but is being replaced; no sunset date is set.",
+      "stepId": "check-token",
+      "claimIds": [
+        "c-sol-ugc",
+        "c-posts-replaces-ugc",
+        "c-posts-headers"
+      ]
+    },
+    {
+      "id": "stale-scope-example",
+      "text": "The 3-legged OAuth page's sample request still uses legacy scopes (liteprofile, emailaddress), and its Step 4 calls /v2/me. For OpenID Connect apps, use openid profile email and read identity from /v2/userinfo.",
+      "stepId": "add-products",
+      "claimIds": [
+        "c-authorize-url",
+        "c-oidc-scopes",
+        "c-userinfo"
+      ]
+    },
+    {
+      "id": "openid-not-in-table",
+      "text": "Request openid even though it isn't in the open-permissions table; it's required for an ID token.",
+      "stepId": "add-products",
+      "claimIds": [
+        "c-open-permissions",
+        "c-oidc-scopes"
+      ]
+    },
+    {
+      "id": "pairwise-sub",
+      "text": "Build the post author as urn:li:person:{sub}. The discovery document declares pairwise subjects, so test this (untested here).",
+      "stepId": "check-token",
+      "claimIds": [
+        "c-oidc-discovery",
+        "c-sub-person-urn"
+      ]
+    },
+    {
+      "id": "pkce-native-only",
+      "text": "PKCE is documented only for native apps. It uses a separate endpoint (/oauth/native-pkce/authorization), loopback redirect URIs and S256, and LinkedIn must enable it for your app on request. Web apps use the client secret.",
+      "claimIds": [
+        "c-pkce-native"
+      ]
+    },
+    {
+      "id": "refresh-wording",
+      "text": "Programmatic refresh tokens are for approved partners only; a Share on LinkedIn-only app shouldn't count on one.",
+      "stepId": "exchange-code",
+      "claimIds": [
+        "c-refresh-partners"
+      ]
+    },
+    {
+      "id": "verify-vs-associate",
+      "text": "Two separate Page admin approvals exist: associating the app with a Page (super admin, within 30 days) and Verify (a Settings-tab request approved via a generated link). Verify is required mainly for Community Management.",
+      "stepId": "have-page",
+      "claimIds": [
+        "c-page-admin-approval",
+        "c-verify-flow",
+        "c-verify-scope",
+        "c-cm-legal-entity"
+      ]
+    },
+    {
+      "id": "token-generator",
+      "text": "The Developer Portal's Token Generator can mint a test token for your own account without writing the code flow, and the Token Inspector shows a token's TTL and scopes.",
+      "claimIds": [
+        "c-token-tools"
+      ]
+    },
+    {
+      "id": "consent-checkpoint",
+      "text": "LinkedIn may interrupt consent with a security checkpoint, such as an email verification. Native apps must use the system browser, not a webview.",
+      "stepId": "authorize",
+      "claimIds": [
+        "c-checkpoint",
+        "c-pkce-native"
+      ]
+    }
+  ],
+  "notFound": [
+    {
+      "item": "Whether Page verification (the Verify button) is required for Share on LinkedIn",
+      "why": "Required for \"certain products\", which aren't listed.",
+      "claimIds": [
+        "c-verify-scope",
+        "c-instant-grant"
+      ]
+    },
+    {
+      "item": "Official statement that Share on LinkedIn and OpenID Connect are granted instantly",
+      "why": "Called open permissions; the instant grant is unconfirmed.",
+      "claimIds": [
+        "c-open-permissions",
+        "c-instant-grant"
+      ]
+    },
+    {
+      "item": "Whether http://localhost is accepted as a redirect URL for the web flow",
+      "why": "Only HTTPS is stated for web flows; loopback is native PKCE only.",
+      "claimIds": [
+        "c-redirect-rules",
+        "c-pkce-native"
+      ]
+    },
+    {
+      "item": "Sunset date for /v2/ugcPosts",
+      "why": "No retirement date set.",
+      "claimIds": [
+        "c-posts-replaces-ugc"
+      ]
+    },
+    {
+      "item": "Official mapping from OIDC sub to urn:li:person id",
+      "why": "The mapping isn't stated, and discovery declares pairwise subjects.",
+      "claimIds": [
+        "c-sub-person-urn",
+        "c-oidc-discovery"
+      ]
+    },
+    {
+      "item": "Exact Products tab button labels (e.g. Request access) and the redirect URL field label",
+      "why": "Not checked in a signed-in portal; labels may differ.",
+      "claimIds": [
+        "c-sol-product",
+        "c-oidc-scopes"
+      ]
+    },
+    {
+      "item": "Logo size and format",
+      "why": "Not stated in the official create-app help article.",
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "item": "Where exactly the line falls on 'automate posting' (API Terms 3.1(26))",
+      "why": "The terms give no definition or examples. Whether user-initiated agent posting is allowed is a legal reading, not a documented rule.",
+      "claimIds": [
+        "c-terms-automation"
+      ]
+    },
+    {
+      "item": "Security assessment, business or domain verification for member posting",
+      "why": "Not mentioned in the Share on LinkedIn, OpenID Connect or getting-access pages. Recorded as not_mentioned, not as 'not required'.",
+      "claimIds": []
+    },
+    {
+      "item": "Whether the Page super admin's approval can be undone",
+      "why": "Seen only in a search snippet of the official approve/deny help article, which wasn't opened.",
+      "claimIds": [
+        "c-approve-irreversible"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "c-authorize-url",
+      "statement": "The authorization endpoint is GET https://www.linkedin.com/oauth/v2/authorization with response_type=code, client_id, redirect_uri and a URL-encoded, space-delimited scope (required), plus an optional state. The page's sample uses legacy scopes (liteprofile, emailaddress) and calls /v2/me.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow (updated 2026-05-15)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-token-url",
+      "statement": "The code is exchanged by POST to https://www.linkedin.com/oauth/v2/accessToken as x-www-form-urlencoded, with grant_type=authorization_code, code, client_id, client_secret and redirect_uri.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-secret",
+      "statement": "Client ID and Client Secret are shown on the app's Auth tab. LinkedIn says not to share the secret or pass it in URLs or query strings.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-redirect-rules",
+      "statement": "Redirect URLs are added on the Auth tab via HTTPS. They must be absolute, query parameters are ignored, URLs with # are invalid, and redirect_uri must match a registered URL. Postman's callback URL is documented for testing.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "LinkedIn servers will only communicate with URLs that you have identified as trusted."
+        }
+      ]
+    },
+    {
+      "id": "c-auth-tab-scopes",
+      "statement": "The scopes an app can request depend on its Products. The Auth tab shows the available scopes, and new products are requested on the Products tab.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-scope-all-or-nothing",
+      "statement": "When multiple scopes are requested, the member must consent to all of them and can't select individual scopes.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-state",
+      "statement": "state is a hard-to-guess value for CSRF protection. Apps should check it matches before using the code and return 401 if it doesn't.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-auth-errors",
+      "statement": "The authorize endpoint returns 401 for a redirect_uri mismatch, a client_id mismatch, or an invalid scope (one not assigned to the app). Cancellations redirect with error=user_cancelled_login or user_cancelled_authorize.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-auth-code-30m",
+      "statement": "The authorization code has a 30-minute lifespan and must be used immediately.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-token-errors",
+      "statement": "An expired or mismatched code at the token endpoint returns 400 invalid_redirect_uri with a combined message covering appid, redirect uri, code verifier and code expiry.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-token-60d",
+      "statement": "All access tokens are currently issued with a 60-day lifespan (sample expires_in 5184000).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "Currently, all access tokens are issued with a 60-day lifespan."
+        }
+      ]
+    },
+    {
+      "id": "c-token-length",
+      "statement": "Access and refresh tokens are about 500 characters. LinkedIn recommends handling at least 1000.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-scope-invalidates",
+      "statement": "A member can hold multiple valid tokens for the same scope, but requesting a different scope invalidates all previous access tokens.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-reauth-silent",
+      "statement": "To refresh without refresh tokens, the app repeats the authorization flow. LinkedIn skips the consent screen if the member is still signed in and their current token hasn't expired.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-refresh-partners",
+      "statement": "Programmatic refresh tokens are available to a limited set of partners (the OAuth page) or all approved Marketing Developer Platform partners (the refresh-token page). They last 365 days, and refreshing doesn't extend that.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow",
+          "title": "LinkedIn 3-Legged OAuth Flow",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "Programmatic refresh tokens are available for a limited set of partners."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-refresh-tokens",
+          "title": "Refresh Tokens with OAuth 2.0 (updated 2025-10-08)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "for all approved Marketing Developer Platform (MDP) partners"
+        }
+      ]
+    },
+    {
+      "id": "c-token-invalid-reasons",
+      "statement": "Tokens become invalid when they expire, when the member revokes access, when the app changes requested scopes, or when a later flow issues a new token. Apps should handle 401 by restarting authorization.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow-native",
+          "title": "Authenticating with OAuth 2.0 for Native Clients (updated 2023-04-03)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-pkce-native",
+      "statement": "PKCE is documented for native apps only. It uses GET /oauth/native-pkce/authorization, loopback redirects (127.0.0.1 or [::1], http or https), code_challenge_method S256, and a token exchange with code_verifier and no secret. LinkedIn enables it per app on request, and native apps must use the system browser.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow-native",
+          "title": "Authenticating with OAuth 2.0 for Native Clients",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "we will enable PKCE OAuth 2 flow for your app"
+        }
+      ]
+    },
+    {
+      "id": "c-open-permissions",
+      "statement": "profile and email (Sign in with LinkedIn using OpenID Connect) and w_member_social (Share on LinkedIn) are Open Permissions. They are available to all developers without special approval and added self-serve on the Products tab. Most other permissions need explicit approval.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access",
+          "title": "Getting Access to LinkedIn APIs (updated 2026-06-03)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "Open Permissions are the only permissions that are available to all developers"
+        }
+      ]
+    },
+    {
+      "id": "c-sol-product",
+      "statement": "w_member_social is required to post as the authenticated member. It is granted by adding the Share on LinkedIn product on the app's Products tab.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin",
+          "title": "Share on LinkedIn (updated 2023-12-14)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-sol-ugc",
+      "statement": "The Share on LinkedIn page documents posting via POST https://api.linkedin.com/v2/ugcPosts with X-Restli-Protocol-Version: 2.0.0, a Person URN author, and visibility CONNECTIONS or PUBLIC. It returns 201 with X-RestLi-Id.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin",
+          "title": "Share on LinkedIn",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-sol-rate-limits",
+      "statement": "Share on LinkedIn rate limits are 150 requests per member and 100,000 per application per day (UTC).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin",
+          "title": "Share on LinkedIn",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-oidc-scopes",
+      "statement": "Sign In with LinkedIn using OpenID Connect uses openid (required for the ID token), profile and email. Developers request the product on the Products tab. LinkedIn notes it doesn't verify user identities.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2",
+          "title": "Sign In with LinkedIn using OpenID Connect (updated 2024-08-08)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-oidc-discovery",
+      "statement": "The OIDC discovery document is at https://www.linkedin.com/oauth/.well-known/openid-configuration. It lists the same authorize and token endpoints, userinfo at api.linkedin.com/v2/userinfo, RS256-signed ID tokens, JWKS at /oauth/openid/jwks, response type code only, and pairwise subject types.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2",
+          "title": "Sign In with LinkedIn using OpenID Connect",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-userinfo",
+      "statement": "GET https://api.linkedin.com/v2/userinfo with a bearer token returns sub, name, given_name, family_name, picture and locale. email and email_verified are optional and may be absent.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2",
+          "title": "Sign In with LinkedIn using OpenID Connect",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-sub-person-urn",
+      "statement": "Community guides build the post author as urn:li:person:{sub} from /v2/userinfo and report it works with w_member_social. The OIDC page doesn't state this mapping.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://dev.to/broke2builtai/how-to-post-to-linkedin-from-a-script-the-15-minute-oauth-walkthrough-2026-58fp",
+          "title": "DEV Community: How to post to LinkedIn from a script (2026)",
+          "kind": "community",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-posts-create",
+      "statement": "Posts are created with POST https://api.linkedin.com/rest/posts (author, commentary, visibility, distribution, lifecycleState PUBLISHED). Success is 201 with the post URN in the x-restli-id header.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api",
+          "title": "Posts API (updated 2026-05-13)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-posts-headers",
+      "statement": "All Posts API calls require a Linkedin-Version header in YYYYMM format and X-Restli-Protocol-Version: 2.0.0.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api",
+          "title": "Posts API",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-posts-replaces-ugc",
+      "statement": "The Posts API page says Posts replaces the ugcPosts API, and the Content API migration guide maps the ugcPosts and Share API fields to Posts. Neither gives a ugcPosts sunset date.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api",
+          "title": "Posts API",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "The Posts API replaces the ugcPosts API."
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/contentapi-migration-guide",
+          "title": "Migration Guide for Content API",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-posts-permissions",
+      "statement": "w_member_social posts as the authenticated member. w_organization_social posts as an organization and is restricted to members with ADMINISTRATOR, DIRECT_SPONSORED_CONTENT_POSTER or CONTENT_ADMIN roles. r_member_social is restricted to approved users.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api",
+          "title": "Posts API",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-posts-errors",
+      "statement": "The Posts API returns 403 ACCESS_DENIED when the needed scope (e.g. w_member_social) or company page role is missing, and 429 TOO_MANY_REQUESTS when rate limits are exceeded.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api",
+          "title": "Posts API",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-posts-delete",
+      "statement": "DELETE https://api.linkedin.com/rest/posts/{encoded URN} is idempotent and returns 204.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api",
+          "title": "Posts API",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-version-required",
+      "statement": "Versioned (/rest) calls must specify a Linkedin-Version (YYYYMM). The latest isn't applied by default, and a missing or deprecated version returns an error.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/versioning",
+          "title": "LMS API Documentation Versioning (updated 2026-10-14)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-version-sunset",
+      "statement": "Versions ship monthly and are supported for at least one year. The latest is 202610, and version 202511 sunsets on November 16, 2026.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/versioning",
+          "title": "LMS API Documentation Versioning",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-rate-limits-general",
+      "statement": "All API calls are rate-limited per app and per member over 24 hours, resetting at midnight UTC. Exceeding a limit returns 429. Standard limits aren't published and are looked up per endpoint on the app's Analytics tab after one call.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/api-guide/concepts/rate-limits",
+          "title": "LinkedIn API Rate Limiting (updated 2025-08-20)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-rate-alerts",
+      "statement": "Developer admins get email alerts, about 1 to 2 hours late, when an app passes 75% of an app-level quota. Member-level breaches don't trigger alerts.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/api-guide/concepts/rate-limits",
+          "title": "LinkedIn API Rate Limiting",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-token-tools",
+      "statement": "The Developer Portal has a Token Generator (pick an app, OAuth flow and scopes, approve, then copy the token) and a Token Inspector showing TTL and status. Analytics also tracks refresh-token quota.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/shared/authentication/developer-portal-tools",
+          "title": "Developer Portal Tools (updated 2025-10-08)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-create-app",
+      "statement": "To create an app: My apps > Create app, then fill App name, LinkedIn Page (or Create a new LinkedIn Page), Privacy policy URL and Upload a logo (shown when users authorize). Tick 'I have read and agree to these terms' and click Create app.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/help/learning/answer/a1667239",
+          "title": "LinkedIn Help: Create a new app for a LinkedIn Page",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-default-page",
+      "statement": "LinkedIn Help says API products available to individual developers must have a default page, which you must select to continue creating the app. It also says certain functionality and products require associating the app with a Page.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/help/linkedin/answer/a548360/associate-an-app-with-a-linkedin-page?lang=en",
+          "title": "LinkedIn Help: Associate an app with a LinkedIn Page",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "API Products available to individual developers must have a default page"
+        }
+      ]
+    },
+    {
+      "id": "c-page-permanent",
+      "statement": "Apps are permanently associated with one LinkedIn Page and can't be transferred. After a merger, acquisition, rebrand or lost Page access, you create new apps.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/help/linkedin/answer/a548360/associate-an-app-with-a-linkedin-page?lang=en",
+          "title": "LinkedIn Help: Associate an app with a LinkedIn Page",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://www.linkedin.com/help/learning/answer/a1667239",
+          "title": "LinkedIn Help: Create a new app for a LinkedIn Page",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-page-admin-approval",
+      "statement": "After you create an app and select a Page, the Page super admin has 30 days to approve or deny the request. Once approved, the association shows in app settings.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/help/linkedin/answer/a548360/associate-an-app-with-a-linkedin-page?lang=en",
+          "title": "LinkedIn Help: Associate an app with a LinkedIn Page",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-verify-flow",
+      "statement": "To request verification: app Settings tab > Verify > Generate URL (Verify company dialog) > Copy URL, send it to the Page super admin, then I'm done. The admin has 30 days. A denial invalidates all links generated for the app.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/help/learning/answer/a1665329",
+          "title": "LinkedIn Help: Send an app verification request for a LinkedIn Page",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-verify-scope",
+      "statement": "The verification help article says Page association is required for certain functionality and products, but doesn't list which. No official page read says Share on LinkedIn needs it.",
+      "label": "uncertain",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/help/learning/answer/a1665329",
+          "title": "LinkedIn Help: Send an app verification request for a LinkedIn Page",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "For certain functionality and products, you're required to associate your app"
+        }
+      ]
+    },
+    {
+      "id": "c-approve-irreversible",
+      "statement": "A search snippet of LinkedIn's approve/deny help article says an approving admin takes responsibility for the app and the approval can't be undone.",
+      "label": "uncertain",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/help/learning/answer/a1669245",
+          "title": "LinkedIn Help: Approve or deny an app verification request (search snippet only)",
+          "kind": "official",
+          "read": "snippet",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-instant-grant",
+      "statement": "A 2026 community walkthrough reports that Share on LinkedIn and Sign In with LinkedIn using OpenID Connect are instant self-serve grants with no review queue. It also reports that a Page super admin's verification is instant.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://dev.to/broke2builtai/how-to-post-to-linkedin-from-a-script-the-15-minute-oauth-walkthrough-2026-58fp",
+          "title": "DEV Community: How to post to LinkedIn from a script (2026)",
+          "kind": "community",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-cm-exclusive",
+      "statement": "A community guide reports that the Community Management API can't share an app with other products, so organization posting needs a dedicated app.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://dev.to/broke2builtai/how-to-post-to-linkedin-from-a-script-the-15-minute-oauth-walkthrough-2026-58fp",
+          "title": "DEV Community: How to post to LinkedIn from a script (2026)",
+          "kind": "community",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-checkpoint",
+      "statement": "A community guide reports that LinkedIn may interrupt consent with a security checkpoint, such as email verification, and the flow resumes after it is completed.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://dev.to/broke2builtai/how-to-post-to-linkedin-from-a-script-the-15-minute-oauth-walkthrough-2026-58fp",
+          "title": "DEV Community: How to post to LinkedIn from a script (2026)",
+          "kind": "community",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-cm-legal-entity",
+      "statement": "Community Management APIs are only for registered legal organizations with commercial use cases. Applicants need a verified business email (no personal addresses), the organization's legal name, address, website and privacy policy, an app verified by a super admin of the organization's Page, and an app name and logo free of LinkedIn or Microsoft marks.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review",
+          "title": "Community Management App Review (updated 2026-02-11)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "only available to registered legal organizations for commercial use cases only"
+        }
+      ]
+    },
+    {
+      "id": "c-cm-standard",
+      "statement": "Community Management Standard tier needs Development tier approval, a full integration, a company and product overview, test credentials, and a high-resolution, downloadable screencast of each use case.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review",
+          "title": "Community Management App Review",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/quick-start",
+          "title": "Marketing Quick Start (updated 2026-08-17)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-cm-reapply",
+      "statement": "If a Community Management Development or Standard tier request is rejected, you can't re-apply with the existing app. You create a new app and submit a new Development tier request.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://learn.microsoft.com/en-us/linkedin/marketing/community-management-app-review",
+          "title": "Community Management App Review",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "You won't be able to re-apply for Development tier access with your existing app."
+        }
+      ]
+    },
+    {
+      "id": "c-terms-individual",
+      "statement": "The API Terms let individuals develop on the platform as LinkedIn members in good standing. Registering for a company requires authority to bind it, and no legal-entity requirement appears.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/legal/l/api-terms-of-use",
+          "title": "LinkedIn API Terms of Use (updated 2022-12-13)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "currently a member of LinkedIn in good standing"
+        }
+      ]
+    },
+    {
+      "id": "c-terms-automation",
+      "statement": "API Terms section 3.1(26) prohibits using the Content or the APIs to automate posting on LinkedIn.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/legal/l/api-terms-of-use",
+          "title": "LinkedIn API Terms of Use",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "Use the Content or the APIs to automate posting on the LinkedIn Services."
+        }
+      ]
+    },
+    {
+      "id": "c-terms-prefill",
+      "statement": "The API Terms forbid pre-filling content for a user without clear, prominent notice. Pre-filled content must be covered by your privacy policy and editable by the user (3.1(4)). Valid consent is needed before accessing a user's content (5.2).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/legal/l/api-terms-of-use",
+          "title": "LinkedIn API Terms of Use",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-terms-fees",
+      "statement": "The API Terms set no current fee for API use. LinkedIn may charge in future, and developers can't charge users extra for access to LinkedIn Content or APIs.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/legal/l/api-terms-of-use",
+          "title": "LinkedIn API Terms of Use",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-terms-revoke",
+      "statement": "LinkedIn may suspend or terminate API access at any time for any reason, and may change the APIs and the terms.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.linkedin.com/legal/l/api-terms-of-use",
+          "title": "LinkedIn API Terms of Use",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    }
+  ]
+}

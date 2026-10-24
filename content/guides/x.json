@@ -1,0 +1,1922 @@
+{
+  "slug": "x",
+  "app": {
+    "name": "X (formerly Twitter)",
+    "website": "https://x.com",
+    "category": "Social media",
+    "developerPortalUrl": "https://console.x.com",
+    "primaryDocsUrl": "https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code"
+  },
+  "source": "curated",
+  "version": 1,
+  "lastVerified": "2026-10-23",
+  "oauthSupport": "public",
+  "technical": {
+    "authorizationUrl": "https://x.com/i/oauth2/authorize",
+    "tokenUrl": "https://api.x.com/2/oauth2/token",
+    "oauthVersion": "2.0",
+    "pkce": "required",
+    "clientSecretHandling": "Web App and Automated App clients are confidential: send Authorization: Basic base64(client_id:client_secret) to the token, refresh and revoke endpoints, plus code_verifier. Native and Single page apps are public: send client_id in the body and never ship a secret.",
+    "refreshTokens": {
+      "supported": true,
+      "notes": "Issued only when offline.access is requested. Rotation and refresh-token lifetime are not documented; always store the latest refresh_token returned."
+    },
+    "accessTokenLifetime": "About 2 hours; read expires_in from the token response",
+    "redirectUriRules": [
+      "Must exactly match a callback URL allowlisted in the Developer Console, including trailing slashes",
+      "Maximum 10 callback URLs per app",
+      "https in production; for local development use http://127.0.0.1, not localhost",
+      "javascript, data, file, ftp and mailto schemes are disallowed"
+    ],
+    "claimIds": [
+      "c-authorize-url",
+      "c-token-url",
+      "c-pkce",
+      "c-client-auth",
+      "c-public-no-secret-ref",
+      "c-offline",
+      "c-refresh-rotation",
+      "c-token-2h",
+      "c-callback-rules",
+      "c-redirect-exact",
+      "c-revoke"
+    ]
+  },
+  "profiles": [
+    {
+      "id": "read-post-users",
+      "intent": "Read and post for users",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "tweet.read",
+          "purpose": "Required with users.read for GET /2/users/me and for POST /2/tweets",
+          "claimIds": [
+            "c-users-me",
+            "c-create-post"
+          ]
+        },
+        {
+          "name": "users.read",
+          "purpose": "Read the authenticated user and other accounts; needed for /2/users/me",
+          "claimIds": [
+            "c-users-me",
+            "c-scopes"
+          ]
+        },
+        {
+          "name": "tweet.write",
+          "purpose": "Post on the user's behalf (POST /2/tweets)",
+          "claimIds": [
+            "c-create-post",
+            "c-scopes"
+          ]
+        },
+        {
+          "name": "offline.access",
+          "purpose": "Get a refresh token so access survives past the two-hour token",
+          "claimIds": [
+            "c-offline",
+            "c-token-2h"
+          ]
+        },
+        {
+          "name": "media.write",
+          "purpose": "Optional: upload images or video to attach to posts",
+          "claimIds": [
+            "c-scopes"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-new-app",
+            "c-console-signin"
+          ]
+        },
+        "requiresAppReview": {
+          "value": "not_mentioned",
+          "claimIds": [
+            "c-guidelines"
+          ]
+        },
+        "requiresSecurityAssessment": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "requiresBusinessVerification": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": [
+            "c-ppu-model",
+            "c-enterprise-trigger"
+          ]
+        },
+        "paidAccessRequired": {
+          "value": true,
+          "claimIds": [
+            "c-ppu-model",
+            "c-no-free-tier",
+            "c-blocked-no-credits",
+            "c-free-credits"
+          ]
+        },
+        "legalEntityRequired": {
+          "value": false,
+          "claimIds": [
+            "c-agreement-eligibility"
+          ]
+        },
+        "marketplaceListingOptional": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "There is no free test mode. Promotional credits ($20 after a first purchase, plus up to $50 matching the first auto-recharge) expire after 3 months.",
+          "claimIds": [
+            "c-no-free-tier",
+            "c-free-credits"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "Exchange the code within 30 seconds.",
+            "stepId": "exchange-code",
+            "claimIds": [
+              "c-code-30s"
+            ]
+          },
+          {
+            "text": "Register http://127.0.0.1, not localhost, for local callbacks, with an exact match including trailing slash.",
+            "stepId": "configure-oauth2",
+            "claimIds": [
+              "c-callback-rules"
+            ]
+          },
+          {
+            "text": "Include offline.access or you get no refresh token.",
+            "stepId": "authorize",
+            "claimIds": [
+              "c-offline"
+            ]
+          },
+          {
+            "text": "Set Read and write before users connect; changing permissions later forces re-authorization.",
+            "stepId": "configure-oauth2",
+            "claimIds": [
+              "c-app-permissions"
+            ]
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Gated",
+          "summary": "App creation and the OAuth flow are self-serve, but there is no free tier: you must prepay credits before billed calls (including the token check and any post) will work.",
+          "time": {
+            "range": null,
+            "basis": "unknown",
+            "claimIds": []
+          },
+          "claimIds": [
+            "c-new-app",
+            "c-ppu-model",
+            "c-no-free-tier",
+            "c-blocked-no-credits",
+            "c-token-without-credits"
+          ]
+        },
+        "stage2": {
+          "band": "Gated",
+          "summary": "Every read and post costs credits, with a monthly Post read cap. The agreement limits self-serve to apps with a limited number of end users; beyond that, you must apply for Enterprise. No app review is documented.",
+          "time": {
+            "range": null,
+            "basis": "unknown",
+            "claimIds": []
+          },
+          "claimIds": [
+            "c-prices",
+            "c-read-cap-3m",
+            "c-enterprise-trigger",
+            "c-guidelines",
+            "c-blocked-no-credits"
+          ]
+        }
+      },
+      "blockerTags": [
+        "cost",
+        "user_cap",
+        "partner_approval"
+      ],
+      "stage1DoneWhen": {
+        "text": "GET https://api.x.com/2/users/me with the user's Bearer access token returns 200 with data.id and data.username, and the token response included a refresh_token (because offline.access was requested).",
+        "claimIds": [
+          "c-users-me",
+          "c-offline"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "you",
+          "how": "Without a positive credit balance or under an exhausted spending limit, every request is blocked.",
+          "claimIds": [
+            "c-blocked-no-credits",
+            "c-spend-controls"
+          ]
+        },
+        {
+          "party": "provider",
+          "how": "Sets prices and the monthly read cap, can review your use and change your tier, and requires Enterprise once you outgrow self-serve.",
+          "claimIds": [
+            "c-prices",
+            "c-read-cap-3m",
+            "c-agreement-review",
+            "c-enterprise-trigger"
+          ]
+        }
+      ],
+      "stepIds": [
+        "console-signin",
+        "create-app",
+        "configure-oauth2",
+        "copy-client-credentials",
+        "buy-credits",
+        "authorize",
+        "exchange-code",
+        "check-token",
+        "set-spend-controls",
+        "monitor-usage",
+        "follow-automation-rules",
+        "assess-enterprise"
+      ],
+      "requirementIds": [
+        "use-case",
+        "payment-card",
+        "prepaid-credits",
+        "callback-url",
+        "ai-reply-approval",
+        "enterprise-application"
+      ],
+      "limitIds": [
+        "credit-balance",
+        "post-read-cap",
+        "per-call-prices",
+        "post-rate",
+        "me-rate",
+        "self-serve-scope",
+        "callback-count"
+      ],
+      "blockerIds": [
+        "no-credits",
+        "usage-capped",
+        "invalid-redirect",
+        "code-expired",
+        "no-refresh-token",
+        "forbidden",
+        "secret-lost"
+      ],
+      "bottomLine": "Setup takes one sitting, but nothing works until you prepay credits: no free tier exists. Each post costs about $0.015 and reads are capped monthly, and the agreement pushes apps with many users to Enterprise.",
+      "topRisks": [
+        "No free tier: calls fail until you buy credits, and again whenever the balance or spending limit runs out",
+        "Self-serve is limited to apps with a limited number of end users; past that, Enterprise is required with no documented threshold",
+        "The monthly read cap is about 3 million, and quote-posts, likes and follows are Enterprise-only"
+      ]
+    }
+  ],
+  "defaultProfileId": "read-post-users",
+  "steps": [
+    {
+      "id": "console-signin",
+      "stage": 1,
+      "title": "Sign in to the Developer Console and accept the agreement",
+      "owner": "developer",
+      "instructions": [
+        "Go to https://console.x.com and sign in with the X account that will own the app.",
+        "Review and accept the Developer Agreement and Policy. Pay-per-use is meant for prototypes and apps with a limited number of end users; larger use needs Enterprise.",
+        "Complete the profile with basic information about how you plan to use the API."
+      ],
+      "links": [
+        {
+          "label": "Developer Console",
+          "url": "https://console.x.com"
+        },
+        {
+          "label": "Getting access",
+          "url": "https://docs.x.com/x-api/getting-started/getting-access"
+        },
+        {
+          "label": "Developer Agreement",
+          "url": "https://docs.x.com/developer-terms/agreement"
+        }
+      ],
+      "humanGate": "legal_attestation",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-console-signin",
+        "c-enterprise-trigger",
+        "c-agreement-eligibility"
+      ]
+    },
+    {
+      "id": "create-app",
+      "stage": 1,
+      "title": "Create the app",
+      "owner": "developer",
+      "instructions": [
+        "From the Console dashboard click New App (or Create App).",
+        "Enter the app name, description and use case. Describe the read-and-post features honestly; X can review use later.",
+        "The Console generates keys immediately. Anything it shows you is shown once, so save it to a secret manager right away."
+      ],
+      "links": [
+        {
+          "label": "Developer apps",
+          "url": "https://docs.x.com/fundamentals/developer-apps"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-new-app",
+        "c-creds-once",
+        "c-agreement-review"
+      ]
+    },
+    {
+      "id": "configure-oauth2",
+      "stage": 1,
+      "title": "Turn on OAuth 2.0 and register the callback URL",
+      "owner": "agent",
+      "instructions": [
+        "In the app's settings, open User authentication settings > Setup.",
+        "App permissions: choose Read and write so posting works. Changing this later forces users to re-authorize.",
+        "Type of App: Web App for a server that keeps a secret (confidential). Use Native App or Single page App only if you can't keep a secret (public, PKCE only).",
+        "Callback URI / Redirect URL: add your callback exactly as your app will send it, including any trailing slash. Up to 10. Use https in production and http://127.0.0.1:PORT (not localhost) locally.",
+        "Fill in Website URL if the form asks for it (not confirmed as required on an official page).",
+        "Save."
+      ],
+      "links": [
+        {
+          "label": "Developer apps: callback URLs and app types",
+          "url": "https://docs.x.com/fundamentals/developer-apps"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-ui-labels-community",
+        "c-app-permissions",
+        "c-app-types",
+        "c-callback-rules",
+        "c-redirect-exact",
+        "c-website-url"
+      ]
+    },
+    {
+      "id": "copy-client-credentials",
+      "stage": 1,
+      "title": "Copy the OAuth 2.0 Client ID and Client Secret",
+      "owner": "developer",
+      "instructions": [
+        "On the app's Keys and Tokens page, copy the Client ID and (for Web App) the Client Secret.",
+        "Store the secret server-side only. If you lose it, regenerate it; the old one stops working."
+      ],
+      "links": [
+        {
+          "label": "User access token guide",
+          "url": "https://docs.x.com/fundamentals/authentication/oauth-2-0/user-access-token"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-cred-types",
+        "c-creds-once",
+        "c-public-no-secret-ref"
+      ]
+    },
+    {
+      "id": "buy-credits",
+      "stage": 1,
+      "title": "Buy API credits and set a spending limit",
+      "owner": "developer",
+      "instructions": [
+        "In the Developer Console, save a credit or debit card and buy credits. There is no free tier; requests fail without a positive balance.",
+        "Your first purchase can earn $20 in promotional credits (rolling out; they expire after 3 months).",
+        "Set a maximum spend per billing cycle. Optionally turn on auto-recharge (amount plus threshold).",
+        "It isn't documented whether the OAuth flow or /2/users/me works at zero balance; plan on buying credits before the check below."
+      ],
+      "links": [
+        {
+          "label": "Pricing",
+          "url": "https://docs.x.com/x-api/getting-started/pricing"
+        },
+        {
+          "label": "Free credits",
+          "url": "https://docs.x.com/x-api/getting-started/free-credits"
+        }
+      ],
+      "humanGate": "payment",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-ppu-model",
+        "c-no-free-tier",
+        "c-free-credits",
+        "c-blocked-no-credits",
+        "c-spend-controls",
+        "c-token-without-credits"
+      ]
+    },
+    {
+      "id": "authorize",
+      "stage": 1,
+      "title": "Send yourself through the authorize URL with PKCE",
+      "owner": "developer",
+      "instructions": [
+        "Generate a random code_verifier and its S256 code_challenge (plain is also accepted but only use it for testing), plus a random state up to 500 characters.",
+        "Open https://x.com/i/oauth2/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=YOUR_CALLBACK&scope=tweet.read%20tweet.write%20users.read%20offline.access&state=STATE&code_challenge=CHALLENGE&code_challenge_method=S256",
+        "Add media.write to the scope if you will upload images or video.",
+        "Sign in as an X user and approve. X redirects to your callback with code and state; check that state matches."
+      ],
+      "links": [
+        {
+          "label": "Authorization Code Flow with PKCE",
+          "url": "https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code"
+        }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-authorize-url",
+        "c-pkce",
+        "c-state",
+        "c-scopes",
+        "c-offline"
+      ]
+    },
+    {
+      "id": "exchange-code",
+      "stage": 1,
+      "title": "Exchange the code within 30 seconds",
+      "owner": "agent",
+      "instructions": [
+        "Immediately POST to https://api.x.com/2/oauth2/token (form-encoded) with code, grant_type=authorization_code, redirect_uri (same as before) and code_verifier.",
+        "Web App: send Authorization: Basic base64(CLIENT_ID:CLIENT_SECRET) and leave client_id out of the body. Public clients: send client_id in the body.",
+        "Store access_token (valid about two hours) and refresh_token. Refresh with grant_type=refresh_token before it expires.",
+        "Always store whatever refresh_token the refresh response returns; whether X rotates refresh tokens isn't documented."
+      ],
+      "links": [
+        {
+          "label": "User access token guide",
+          "url": "https://docs.x.com/fundamentals/authentication/oauth-2-0/user-access-token"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-token-url",
+        "c-client-auth",
+        "c-code-30s",
+        "c-token-2h",
+        "c-offline",
+        "c-refresh-rotation"
+      ]
+    },
+    {
+      "id": "check-token",
+      "stage": 1,
+      "title": "Check the token works",
+      "owner": "agent",
+      "instructions": [
+        "GET https://api.x.com/2/users/me with Authorization: Bearer ACCESS_TOKEN.",
+        "Expect 200 with data.id, data.name and data.username.",
+        "Optionally POST https://api.x.com/2/tweets with {\"text\": \"...\"} and expect 201 with data.id. Each post costs credits."
+      ],
+      "links": [
+        {
+          "label": "Get my user",
+          "url": "https://docs.x.com/x-api/users/get-my-user"
+        },
+        {
+          "label": "Create Post",
+          "url": "https://docs.x.com/x-api/posts/create-post"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-users-me",
+        "c-create-post",
+        "c-prices"
+      ]
+    },
+    {
+      "id": "set-spend-controls",
+      "stage": 2,
+      "title": "Set spend controls before real users connect",
+      "owner": "developer",
+      "instructions": [
+        "Size auto-recharge for bursty traffic: it fires at most once every 5 minutes and never at zero or negative balance.",
+        "Set a per-cycle spending limit and balance alerts. At the limit, every request is blocked until the next cycle."
+      ],
+      "links": [
+        {
+          "label": "Pricing",
+          "url": "https://docs.x.com/x-api/getting-started/pricing"
+        },
+        {
+          "label": "Usage and billing",
+          "url": "https://docs.x.com/x-api/fundamentals/post-cap"
+        }
+      ],
+      "humanGate": "payment",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-spend-controls",
+        "c-blocked-no-credits"
+      ]
+    },
+    {
+      "id": "monitor-usage",
+      "stage": 2,
+      "title": "Monitor credits and the monthly read cap",
+      "owner": "agent",
+      "instructions": [
+        "Poll GET https://api.x.com/2/usage/tweets for daily Post consumption, or watch per-app usage in the Console.",
+        "Track progress toward your Post read cap per billing cycle (about 3 million); the Console shows the exact figure.",
+        "Handle 429 (rate limit or usage-capped) and request failures caused by an exhausted balance."
+      ],
+      "links": [
+        {
+          "label": "Usage and billing",
+          "url": "https://docs.x.com/x-api/fundamentals/post-cap"
+        },
+        {
+          "label": "Errors",
+          "url": "https://docs.x.com/x-api/fundamentals/response-codes-and-errors"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-usage-endpoint",
+        "c-read-cap-3m",
+        "c-read-cap-2m",
+        "c-no-credit-error"
+      ]
+    },
+    {
+      "id": "follow-automation-rules",
+      "stage": 2,
+      "title": "Follow the posting and automation rules",
+      "owner": "developer",
+      "instructions": [
+        "Posts must be user-initiated. No unsolicited @mentions; replies only when the user engaged first.",
+        "If the app runs an automated account, turn on the Automated label and name the operator in the bio.",
+        "AI-generated replies need X's prior approval through the Policy Support form."
+      ],
+      "links": [
+        {
+          "label": "Developer guidelines",
+          "url": "https://docs.x.com/developer-guidelines"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-guidelines"
+      ]
+    },
+    {
+      "id": "assess-enterprise",
+      "stage": 2,
+      "title": "Decide whether you need Enterprise",
+      "owner": "developer",
+      "instructions": [
+        "The agreement limits self-serve to prototypes and apps with a limited number of end users (no number given). Past that, or past the read cap, apply for Enterprise.",
+        "Quote-posts, likes and follows via the API are Enterprise-only now."
+      ],
+      "links": [
+        {
+          "label": "Developer Agreement",
+          "url": "https://docs.x.com/developer-terms/agreement"
+        }
+      ],
+      "humanGate": "review_submission",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-enterprise-trigger",
+        "c-read-cap-3m",
+        "c-quote-enterprise",
+        "c-price-change"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "use-case",
+      "label": "App name, description and use case",
+      "detail": "Entered when you create the app; X may review your use later and change your access tier.",
+      "howToPrepare": "Write a plain description of reading the user's profile and posting on their behalf, and what triggers a post.",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-new-app",
+        "c-agreement-review"
+      ]
+    },
+    {
+      "id": "payment-card",
+      "label": "Credit or debit card",
+      "detail": "Needed to buy credits; promotional credits require a non-prepaid card that hasn't been rewarded before.",
+      "howToPrepare": "Have a company or personal card ready for the Console billing page.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-free-credits",
+        "c-spend-controls"
+      ]
+    },
+    {
+      "id": "prepaid-credits",
+      "label": "Prepaid API credits",
+      "detail": "Requests are deducted from a prepaid balance; there are no subscriptions or minimums.",
+      "howToPrepare": "Estimate cost: about $0.015 per post ($0.20 with a URL) and $0.010 per user lookup at listed prices. Budget for tests too.",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-ppu-model",
+        "c-prices"
+      ]
+    },
+    {
+      "id": "callback-url",
+      "label": "Exact callback URL",
+      "detail": "https in production; http://127.0.0.1 for local; exact match including trailing slash.",
+      "howToPrepare": "Decide the final callback path before registering it.",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-callback-rules"
+      ]
+    },
+    {
+      "id": "ai-reply-approval",
+      "label": "AI reply approval (only if applicable)",
+      "detail": "AI-generated replies need X's prior approval.",
+      "howToPrepare": "Apply through the Policy Support form named in the developer guidelines before launch.",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-guidelines"
+      ]
+    },
+    {
+      "id": "enterprise-application",
+      "label": "Enterprise application (only at scale)",
+      "detail": "Needed once your use outgrows the self-serve purposes in the agreement or the monthly read cap.",
+      "howToPrepare": "No application form or criteria are published.",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-enterprise-trigger",
+        "c-read-cap-3m"
+      ]
+    }
+  ],
+  "limits": [
+    {
+      "id": "credit-balance",
+      "what": "Credit balance and spending limit",
+      "value": "Prepaid; whatever you buy, up to your per-cycle spending limit",
+      "whenHit": "Requests are blocked until you add credits or the next billing cycle starts. No specific error code is documented.",
+      "claimIds": [
+        "c-blocked-no-credits",
+        "c-no-credit-error"
+      ]
+    },
+    {
+      "id": "post-read-cap",
+      "what": "Post reads per monthly billing cycle (pay-per-use)",
+      "value": "About 3 million (check the Console)",
+      "whenHit": "Higher volume needs an Enterprise plan; over-cap calls return 429 (usage capped).",
+      "claimIds": [
+        "c-read-cap-3m",
+        "c-read-cap-2m",
+        "c-no-credit-error"
+      ]
+    },
+    {
+      "id": "per-call-prices",
+      "what": "Per-operation prices (page undated, read 2026-10-23)",
+      "value": "Create post $0.015 ($0.20 with URL); read post $0.005; user lookup $0.010; Owned Reads $0.001",
+      "whenHit": "Each billed call is deducted from your balance; repeat reads of the same resource in a UTC day are charged once.",
+      "claimIds": [
+        "c-prices",
+        "c-billing-rules"
+      ]
+    },
+    {
+      "id": "post-rate",
+      "what": "POST /2/tweets rate limit",
+      "value": "100 per 15 minutes per user; 10,000 per 24 hours per app",
+      "whenHit": "429 Too Many Requests; wait for x-rate-limit-reset.",
+      "claimIds": [
+        "c-rate-limits",
+        "c-no-credit-error"
+      ]
+    },
+    {
+      "id": "me-rate",
+      "what": "GET /2/users/me rate limit",
+      "value": "75 per 15 minutes per user",
+      "whenHit": "429 Too Many Requests.",
+      "claimIds": [
+        "c-rate-limits"
+      ]
+    },
+    {
+      "id": "self-serve-scope",
+      "what": "Self-serve audience",
+      "value": "Limited number of end users (no number given)",
+      "whenHit": "The agreement requires you to apply for Enterprise.",
+      "claimIds": [
+        "c-enterprise-trigger"
+      ]
+    },
+    {
+      "id": "callback-count",
+      "what": "Callback URLs per app",
+      "value": "10",
+      "whenHit": "Use separate apps for dev, staging and production.",
+      "claimIds": [
+        "c-callback-rules"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "id": "no-credits",
+      "symptom": "Calls fail right after setup or suddenly start failing",
+      "cause": "Zero or negative credit balance, or the spending limit was reached",
+      "fix": "Buy credits or raise the spending limit; set auto-recharge above zero",
+      "stepId": "buy-credits",
+      "claimIds": [
+        "c-blocked-no-credits",
+        "c-spend-controls"
+      ]
+    },
+    {
+      "id": "usage-capped",
+      "symptom": "429 with a usage-capped problem type",
+      "cause": "Monthly Post read cap reached",
+      "fix": "Wait for the next billing cycle or move to Enterprise",
+      "stepId": "monitor-usage",
+      "claimIds": [
+        "c-no-credit-error",
+        "c-read-cap-3m"
+      ]
+    },
+    {
+      "id": "invalid-redirect",
+      "symptom": "Authorize page rejects the redirect",
+      "cause": "redirect_uri differs from the registered callback (scheme, host, port, trailing slash), or uses localhost",
+      "fix": "Register the exact URL; use 127.0.0.1 locally",
+      "stepId": "configure-oauth2",
+      "claimIds": [
+        "c-callback-rules",
+        "c-redirect-exact"
+      ]
+    },
+    {
+      "id": "code-expired",
+      "symptom": "Token exchange fails with an invalid code",
+      "cause": "The code is only valid for 30 seconds",
+      "fix": "Exchange the code immediately in the callback handler",
+      "stepId": "exchange-code",
+      "claimIds": [
+        "c-code-30s"
+      ]
+    },
+    {
+      "id": "no-refresh-token",
+      "symptom": "No refresh_token in the token response; user must re-auth every two hours",
+      "cause": "offline.access missing from scope",
+      "fix": "Add offline.access and re-authorize",
+      "stepId": "authorize",
+      "claimIds": [
+        "c-offline",
+        "c-token-2h"
+      ]
+    },
+    {
+      "id": "forbidden",
+      "symptom": "403 on posting or other endpoints",
+      "cause": "Missing scope (tweet.write), app permissions not Read and write, or endpoint not available to self-serve (client-forbidden)",
+      "fix": "Request the right scopes, set Read and write and have users re-authorize; Enterprise for quote-posts, likes and follows",
+      "stepId": "configure-oauth2",
+      "claimIds": [
+        "c-client-forbidden",
+        "c-app-permissions",
+        "c-quote-enterprise",
+        "c-price-change"
+      ]
+    },
+    {
+      "id": "secret-lost",
+      "symptom": "Client Secret no longer visible in the Console",
+      "cause": "Credentials are shown only once",
+      "fix": "Regenerate and update your server; the old secret stops working",
+      "stepId": "create-app",
+      "claimIds": [
+        "c-creds-once"
+      ]
+    }
+  ],
+  "nuances": [
+    {
+      "id": "pkce-for-all",
+      "text": "PKCE is used even by confidential Web App clients: send code_verifier at the token exchange alongside the Basic auth header. Docs examples use plain; prefer S256.",
+      "stepId": "authorize",
+      "claimIds": [
+        "c-pkce",
+        "c-client-auth"
+      ]
+    },
+    {
+      "id": "hosts",
+      "text": "Authorize on x.com/i/oauth2/authorize, but token, revoke and API calls go to api.x.com.",
+      "stepId": "authorize",
+      "claimIds": [
+        "c-authorize-url",
+        "c-token-url",
+        "c-revoke"
+      ]
+    },
+    {
+      "id": "localhost",
+      "text": "Use http://127.0.0.1, not localhost, for local development callbacks.",
+      "stepId": "configure-oauth2",
+      "claimIds": [
+        "c-callback-rules"
+      ]
+    },
+    {
+      "id": "token-lifetime-wording",
+      "text": "Access tokens are short-lived (about 2 hours); offline.access adds a refresh token. Use expires_in from the response.",
+      "stepId": "authorize",
+      "claimIds": [
+        "c-token-2h",
+        "c-offline"
+      ]
+    },
+    {
+      "id": "read-cap-conflict",
+      "text": "Post reads per cycle: about 3 million. Check the Console for your exact cap.",
+      "stepId": "monitor-usage",
+      "claimIds": [
+        "c-read-cap-3m",
+        "c-read-cap-2m"
+      ]
+    },
+    {
+      "id": "permission-change-reauth",
+      "text": "Changing app permissions (e.g. Read to Read and write) requires existing users to re-authorize, so set Read and write before inviting users.",
+      "stepId": "configure-oauth2",
+      "claimIds": [
+        "c-app-permissions"
+      ]
+    },
+    {
+      "id": "scope-example",
+      "text": "The authorization-code page's example uses account.follows.* scopes that its own scope table doesn't list; use the table names.",
+      "stepId": "authorize",
+      "claimIds": [
+        "c-scope-example",
+        "c-scopes"
+      ]
+    },
+    {
+      "id": "oauth1-migration",
+      "text": "Existing OAuth 1.0a users can be moved to OAuth 2.0 with token exchange, without re-authorizing; offline.access is included.",
+      "claimIds": [
+        "c-token-exchange"
+      ]
+    },
+    {
+      "id": "oauth1-precedence",
+      "text": "On Account Activity API v2, OAuth 1.0a permissions override OAuth 2.0 scopes when both exist.",
+      "claimIds": [
+        "c-oauth1-precedence"
+      ]
+    },
+    {
+      "id": "legacy-plans",
+      "text": "Basic and Pro may have been deprecated after the Feb 2026 launch; check current plans in the Console.",
+      "claimIds": [
+        "c-ppu-launch",
+        "c-legacy-deprecation"
+      ]
+    }
+  ],
+  "notFound": [
+    {
+      "item": "Whether the OAuth flow or GET /2/users/me succeeds with a zero credit balance",
+      "why": "Not stated, and untested.",
+      "claimIds": [
+        "c-token-without-credits"
+      ]
+    },
+    {
+      "item": "Which price applies to GET /2/users/me",
+      "why": "Not listed by name; could be User: Read ($0.010) or Owned Reads ($0.001).",
+      "claimIds": [
+        "c-token-without-credits",
+        "c-prices"
+      ]
+    },
+    {
+      "item": "Refresh token rotation and refresh token lifetime",
+      "why": "Not stated.",
+      "claimIds": [
+        "c-refresh-rotation"
+      ]
+    },
+    {
+      "item": "Specific error code or body when credits run out",
+      "why": "No credits error is documented; requests just fail or are blocked.",
+      "claimIds": [
+        "c-no-credit-error",
+        "c-blocked-no-credits"
+      ]
+    },
+    {
+      "item": "Current Console labels (User authentication settings, Type of App, Callback URI / Redirect URL, Website URL) and whether Website URL is required",
+      "why": "Not checked in a signed-in Console; labels may differ.",
+      "claimIds": [
+        "c-ui-labels-community",
+        "c-website-url"
+      ]
+    },
+    {
+      "item": "Read cap figure",
+      "why": "Sources say 2-3 million.",
+      "claimIds": [
+        "c-read-cap-3m",
+        "c-read-cap-2m"
+      ]
+    },
+    {
+      "item": "Effective date of the listed per-call prices",
+      "why": "Pricing page is undated; the changelog shows a repricing on Apr 16, 2026. developer.x.com returned 402.",
+      "claimIds": [
+        "c-prices",
+        "c-price-change",
+        "c-devx-unfetchable"
+      ]
+    },
+    {
+      "item": "Status of legacy Basic and Pro plans",
+      "why": "Unofficial dates only.",
+      "claimIds": [
+        "c-legacy-deprecation"
+      ]
+    },
+    {
+      "item": "Enterprise threshold, application process and timeline",
+      "why": "The agreement gives no user number; no application page was found.",
+      "claimIds": [
+        "c-enterprise-trigger"
+      ]
+    },
+    {
+      "item": "Free access for public utility apps",
+      "why": "Unofficial reports only.",
+      "claimIds": [
+        "c-public-utility"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "c-console-signin",
+      "statement": "Access starts at the Developer Console (console.x.com): sign in with an X account, review and accept the Developer Agreement and Policy, and complete a profile describing how you plan to use the API.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/getting-access.md",
+          "title": "X API: Getting access",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-new-app",
+      "statement": "Apps are created self-serve in the Developer Console by entering a name, description and use case. One official page calls the button New App, another calls it Create App.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/getting-access.md",
+          "title": "X API: Getting access",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/fundamentals/developer-apps.md",
+          "title": "X developer docs: Developer apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-creds-once",
+      "statement": "The Console generates credentials automatically and shows them only once; regenerating them invalidates the old ones.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/getting-access.md",
+          "title": "X API: Getting access",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "only shown once"
+        },
+        {
+          "url": "https://docs.x.com/fundamentals/developer-apps.md",
+          "title": "X developer docs: Developer apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-cred-types",
+      "statement": "Each app gets API Key and Secret, Bearer Token, Access Token and Secret (OAuth 1.0a, owner account) and Client ID and Secret for OAuth 2.0 user context. Client ID and Client Secret are on the Keys and Tokens page once OAuth 2.0 is enabled for the app.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/getting-access.md",
+          "title": "X API: Getting access",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/fundamentals/developer-apps.md",
+          "title": "X developer docs: Developer apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/user-access-token.md",
+          "title": "OAuth 2.0: How to connect to endpoints (user access token)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-app-types",
+      "statement": "OAuth 2.0 app type options are Web App and Automated App or bot (confidential, receive a Client Secret) and Native App and Single page App (public, cannot use the client secret).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/fundamentals/developer-apps.md",
+          "title": "X developer docs: Developer apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-app-permissions",
+      "statement": "App permission levels are Read only, Read and write, and Read, write, and DMs (documented under OAuth 1.0a). Changing permissions requires users to re-authorize the app.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/fundamentals/developer-apps.md",
+          "title": "X developer docs: Developer apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-ui-labels-community",
+      "statement": "A third-party setup guide says OAuth is configured under the app's User authentication settings > Setup, with fields App permissions, Type of App, and Callback URI / Redirect URL.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://docs.amember.com/PluginDocs/Misc/XSignin",
+          "title": "aMember: X Signin plugin setup",
+          "kind": "vendor",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-website-url",
+      "statement": "An older third-party guide lists a Website URL field in X app setup. No official page read says whether Website URL is required in the current Console.",
+      "label": "uncertain",
+      "sources": [
+        {
+          "url": "https://www.ibm.com/docs/en/SSCT62/tasks/idp_config_twitter.html",
+          "title": "IBM Verify: Configuring your application in X",
+          "kind": "vendor",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-callback-rules",
+      "statement": "Callback URLs must be allowlisted in the Developer Console and match exactly, including trailing slashes; up to 10 per app; use https in production and http://127.0.0.1 (not localhost) for local development; javascript, data, file, ftp and mailto schemes are disallowed.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/fundamentals/developer-apps.md",
+          "title": "X developer docs: Developer apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-redirect-exact",
+      "statement": "The redirect_uri sent in the authorize request must correspond to a Callback URL in the app's settings; OAuth 2.0 uses exact match validation.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "exact match validation"
+        }
+      ]
+    },
+    {
+      "id": "c-authorize-url",
+      "statement": "Users are sent to https://x.com/i/oauth2/authorize with response_type=code, client_id, redirect_uri, scope (space-separated, URL-encoded), state, code_challenge and code_challenge_method.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/user-access-token.md",
+          "title": "OAuth 2.0: How to connect to endpoints (user access token)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-pkce",
+      "statement": "PKCE is part of every documented authorization request: code_challenge_method accepts S256 or plain (examples use plain), and the token exchange sends code_verifier for both public and confidential clients.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "S256 OR plain"
+        },
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/user-access-token.md",
+          "title": "OAuth 2.0: How to connect to endpoints (user access token)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-state",
+      "statement": "state is a random CSRF string of up to 500 characters; X returns it with the code on redirect.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/user-access-token.md",
+          "title": "OAuth 2.0: How to connect to endpoints (user access token)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-token-url",
+      "statement": "Codes are exchanged by POST https://api.x.com/2/oauth2/token (application/x-www-form-urlencoded) with code, grant_type=authorization_code, redirect_uri and code_verifier.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/user-access-token.md",
+          "title": "OAuth 2.0: How to connect to endpoints (user access token)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-client-auth",
+      "statement": "Confidential clients authenticate with Authorization: Basic base64(client_id:client_secret) and omit client_id from the body; public clients send client_id in the body and no secret.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/user-access-token.md",
+          "title": "OAuth 2.0: How to connect to endpoints (user access token)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-code-30s",
+      "statement": "The authorization code expires 30 seconds after it is issued, so it must be exchanged immediately.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "a time limit of 30 seconds"
+        }
+      ]
+    },
+    {
+      "id": "c-token-2h",
+      "statement": "Access tokens from this flow stay valid for two hours unless offline.access was used (the docs' wording).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-offline",
+      "statement": "A refresh token is issued only when the offline.access scope is requested; refresh is POST /2/oauth2/token with grant_type=refresh_token and refresh_token (plus client_id for public clients, Basic header for confidential).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/user-access-token.md",
+          "title": "OAuth 2.0: How to connect to endpoints (user access token)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-refresh-rotation",
+      "statement": "None of the official pages read say whether a refresh returns a new refresh token or invalidates the old one.",
+      "label": "uncertain",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/user-access-token.md",
+          "title": "OAuth 2.0: How to connect to endpoints (user access token)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/xdks/python/authentication.md",
+          "title": "Python XDK: Authentication",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-revoke",
+      "statement": "Tokens are revoked with POST https://api.x.com/2/oauth2/revoke; users can also revoke at x.com/settings/connected_apps.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/user-access-token.md",
+          "title": "OAuth 2.0: How to connect to endpoints (user access token)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-scopes",
+      "statement": "Documented scopes include tweet.read, tweet.write, users.read, offline.access and media.write, among others (follows, like, list, dm, bookmark, mute, block, space, broadcast, users.email).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-scope-example",
+      "statement": "The authorization-code page's example URL uses account.follows.read and account.follows.write, which are not in its own scope table.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-users-me",
+      "statement": "GET https://api.x.com/2/users/me with an OAuth 2.0 user token needs tweet.read and users.read and returns a data object with id, name and username.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/users/get-my-user.md",
+          "title": "X API reference: Get my user",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-create-post",
+      "statement": "POST https://api.x.com/2/tweets needs tweet.read, users.read and tweet.write; a minimal JSON body is {\"text\": \"...\"} and success is 201 with data.id and data.text.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/posts/create-post.md",
+          "title": "X API reference: Create Post",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-quote-enterprise",
+      "statement": "Quote-posting (quote_tweet_id) needs an Enterprise plan and is unavailable on self-serve pay-per-use.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/posts/create-post.md",
+          "title": "X API reference: Create Post",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-ppu-model",
+      "statement": "X API v2 uses pay-per-usage pricing with no subscriptions or minimums: credits are bought upfront in the Developer Console and deducted per request.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/pricing.md",
+          "title": "X API: Pricing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "pay-per-usage pricing with no subscriptions"
+        },
+        {
+          "url": "https://docs.x.com/x-api/getting-started/about-x-api.md",
+          "title": "About the X API",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/x-api/fundamentals/post-cap.md",
+          "title": "X API: Usage and Billing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-ppu-launch",
+      "statement": "Pay-Per-Use launched Feb 6, 2026 with a new Developer Console at console.x.com, after a closed pilot from Oct 20, 2025. At launch Basic and Pro stayed available and recently active Legacy Free users got a one-time $10 voucher.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/changelog.md",
+          "title": "X developer changelog",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-no-free-tier",
+      "statement": "The official pricing and free-credits pages describe no free tier; the only no-cost credit is promotional.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/pricing.md",
+          "title": "X API: Pricing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/x-api/getting-started/free-credits.md",
+          "title": "X API: Free credits",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/x-api/getting-started/about-x-api.md",
+          "title": "About the X API",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-free-credits",
+      "statement": "New pay-per-use accounts can earn $20 after saving a card and making a first credit purchase (adding a card alone stopped qualifying Oct 13, 2026), plus a match of the first auto-recharge up to $50. Free credits expire 3 months after grant and the incentives are still rolling out.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/free-credits.md",
+          "title": "X API: Free credits",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "Adding a card on its own no longer qualifies"
+        },
+        {
+          "url": "https://docs.x.com/changelog.md",
+          "title": "X developer changelog",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-prices",
+      "statement": "Listed per-operation prices (page undated; retrieved 2026-10-23): read posts $0.005 per resource, user lookup $0.010 per resource, create post $0.015 per request, create post with URL $0.200, Owned Reads $0.001 per resource.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/pricing.md",
+          "title": "X API: Pricing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-price-change",
+      "statement": "On Apr 16, 2026 X cut Owned Reads prices, repriced post writes, and removed following, likes and quote-posts via the API from all self-serve tiers.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/changelog.md",
+          "title": "X developer changelog",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-read-cap-3m",
+      "statement": "Pay-per-use is capped at 3 million Post reads per monthly billing cycle; more needs an Enterprise plan.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/pricing.md",
+          "title": "X API: Pricing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/x-api/fundamentals/post-cap.md",
+          "title": "X API: Usage and Billing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-read-cap-2m",
+      "statement": "A third-party pricing article (updated Sep 2, 2026) states a 2,000,000 posts-per-month read cap for pay-per-use, conflicting with X's 3 million.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://www.socialcrawl.dev/blog/x-twitter-api-2026",
+          "title": "SocialCrawl: X (Twitter) API in 2026 (updated Sep 2, 2026)",
+          "kind": "vendor",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-blocked-no-credits",
+      "statement": "API requests are blocked when the credit balance is negative or a spending limit is reached, until credits are added or the next billing cycle starts.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/pricing.md",
+          "title": "X API: Pricing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/x-api/fundamentals/post-cap.md",
+          "title": "X API: Usage and Billing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "API requests will fail until you purchase more credits"
+        }
+      ]
+    },
+    {
+      "id": "c-no-credit-error",
+      "statement": "The errors reference documents no 402 or credits-specific error; it lists 429 for rate limit or usage cap, with a usage-capped problem type.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/fundamentals/response-codes-and-errors.md",
+          "title": "X API: Response codes and errors",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-client-forbidden",
+      "statement": "403 means valid auth without permission; the client-forbidden type means the app is not enrolled or lacks required access, and user-context endpoints need the right scopes.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/fundamentals/response-codes-and-errors.md",
+          "title": "X API: Response codes and errors",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-billing-rules",
+      "statement": "Only successful responses that return data are billed, and the same resource is charged once per 24-hour UTC window (a soft guarantee).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/fundamentals/post-cap.md",
+          "title": "X API: Usage and Billing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/x-api/getting-started/pricing.md",
+          "title": "X API: Pricing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-spend-controls",
+      "statement": "You can set a maximum spend per billing cycle and auto-recharge (amount plus threshold; needs a saved payment method; at most once per 5 minutes; does not fire at zero or negative balance).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/pricing.md",
+          "title": "X API: Pricing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-usage-endpoint",
+      "statement": "Usage is shown per app in the Developer Console, and GET https://api.x.com/2/usage/tweets returns daily Post consumption.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/pricing.md",
+          "title": "X API: Pricing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/x-api/fundamentals/post-cap.md",
+          "title": "X API: Usage and Billing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-rate-limits",
+      "statement": "GET /2/users/me allows 75 requests per 15 minutes per user; POST /2/tweets allows 100 per 15 minutes per user and 10,000 per 24 hours per app. Rate limits are separate from billing.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/fundamentals/rate-limits.md",
+          "title": "X API: Rate limits",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-enterprise-trigger",
+      "statement": "The Developer Agreement says Pay-Per-Use, Basic and Pro are for hobbyists, prototyping, early development and apps with a limited number of end users; beyond that you must apply for an Enterprise plan. No user or revenue number is given.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/developer-terms/agreement.md",
+          "title": "X Developer Agreement (updated April 27, 2026)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "must apply (or already subscribe to) an Enterprise plan"
+        }
+      ]
+    },
+    {
+      "id": "c-agreement-review",
+      "statement": "X may review your use at any time and require a change of access tier; some uses (e.g. user profiling) need X's written approval.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/developer-terms/agreement.md",
+          "title": "X Developer Agreement (updated April 27, 2026)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-agreement-eligibility",
+      "statement": "Individuals can accept the agreement; Paid Services require age 18 or majority (or parental consent), and accepting for a company requires authority to bind it. No legal-entity requirement is stated.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/developer-terms/agreement.md",
+          "title": "X Developer Agreement (updated April 27, 2026)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-guidelines",
+      "statement": "The developer guidelines describe no general app review. Automated accounts must enable the Automated label, unsolicited @mentions are prohibited, and AI-generated replies need X's prior approval.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/developer-guidelines.md",
+          "title": "X developer guidelines",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-token-without-credits",
+      "statement": "No official page read says whether the OAuth flow itself or GET /2/users/me works with a zero credit balance, or which price category /2/users/me is billed under (User: Read or Owned Reads).",
+      "label": "uncertain",
+      "sources": [
+        {
+          "url": "https://docs.x.com/x-api/getting-started/pricing.md",
+          "title": "X API: Pricing",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/make-your-first-request.md",
+          "title": "Make your first request",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/x-api/users/get-my-user.md",
+          "title": "X API reference: Get my user",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-legacy-deprecation",
+      "statement": "A third-party page reports X deprecated legacy Basic (moved to pay-per-use after Jun 1, 2026) and legacy Pro (after Sep 1, 2026), citing X forum posts that could not be fetched.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://opentweet.io/x-api-pricing",
+          "title": "OpenTweet: X API pricing (says checked Oct 10, 2026)",
+          "kind": "vendor",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://devcommunity.x.com/t/266305",
+          "title": "X Developer Community: legacy Basic deprecation (403 to WebFetch)",
+          "kind": "official",
+          "read": "unfetchable",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://devcommunity.x.com/t/273255",
+          "title": "X Developer Community: legacy Pro deprecation (403 to WebFetch)",
+          "kind": "official",
+          "read": "unfetchable",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-public-utility",
+      "statement": "News coverage says free access continues only for public utility apps and the free plan is effectively discontinued for typical uses.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://roboin.io/article/en/2026/02/08/x-transitions-api-to-pay-per-use-model-ending-free-plan/",
+          "title": "Roboin: X shifts API to pay-per-use (Feb 2026)",
+          "kind": "community",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-token-exchange",
+      "statement": "Since Sep 21, 2026 apps can exchange a user's stored OAuth 1.0a token and secret for an OAuth 2.0 access and refresh token without re-authorization (RFC 8693 token exchange).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/changelog.md",
+          "title": "X developer changelog",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-oauth1-precedence",
+      "statement": "For Account Activity API v2, OAuth 1.0a permissions override OAuth 2.0 scopes when present (Jan 15, 2026 changelog).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/changelog.md",
+          "title": "X developer changelog",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-devx-unfetchable",
+      "statement": "developer.x.com, which the pricing page names as a second source of current rates, returned HTTP 402 and could not be read.",
+      "label": "uncertain",
+      "sources": [
+        {
+          "url": "https://developer.x.com/en/products/x-api",
+          "title": "developer.x.com X API product/pricing page (HTTP 402 to WebFetch)",
+          "kind": "official",
+          "read": "unfetchable",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-public-no-secret-ref",
+      "statement": "Public clients (Native App, Single page App) are unable to use client secrets; confidential clients receive a Client Secret.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.x.com/resources/fundamentals/authentication/oauth-2-0/authorization-code.md",
+          "title": "OAuth 2.0 Authorization Code Flow with PKCE",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "are unable to use your client secrets"
+        },
+        {
+          "url": "https://docs.x.com/fundamentals/developer-apps.md",
+          "title": "X developer docs: Developer apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    }
+  ]
+}

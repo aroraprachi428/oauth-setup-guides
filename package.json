@@ -1,0 +1,31 @@
+{
+  "name": "oauth-setup-guides",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "validate": "tsx scripts/validate-guides.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@libsql/client": "0.18.0",
+    "html-to-text": "10.0.1",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/html-to-text": "9.0.4",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tsx": "4.23.15",
+    "typescript": "^5.9",
+    "vitest": "5.0.5"
+  }
+}

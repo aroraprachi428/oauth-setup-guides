@@ -1,0 +1,593 @@
+{
+  "slug": "linear",
+  "app": {
+    "name": "Linear",
+    "website": "https://linear.app",
+    "category": "Project management",
+    "developerPortalUrl": "https://linear.app/settings/api",
+    "primaryDocsUrl": "https://linear.app/developers/oauth-2-0-authentication"
+  },
+  "source": "curated",
+  "version": 1,
+  "lastVerified": "2026-10-23",
+  "oauthSupport": "public",
+  "technical": {
+    "authorizationUrl": "https://linear.app/oauth/authorize",
+    "tokenUrl": "https://api.linear.app/oauth/token",
+    "oauthVersion": "2.0",
+    "pkce": "supported",
+    "clientSecretHandling": "Confidential apps send client_id and client_secret to the token endpoint as form parameters or HTTP Basic auth. With PKCE, code_verifier is sent and client_secret becomes optional. Rotating the secret in Settings doesn't break existing user tokens; they move to the new secret on their next refresh.",
+    "refreshTokens": {
+      "supported": true,
+      "expiry": "Not documented (may expire after inactivity)",
+      "notes": "All OAuth2 apps were migrated to refresh tokens on April 1, 2026. Every refresh returns a new access token and a new refresh token (rotation); a lost refresh response can be replayed within a 30-minute grace period."
+    },
+    "accessTokenLifetime": "24 hours (expires_in 86399 in Linear's example)",
+    "redirectUriRules": [
+      "Register callback URLs on the app; a manifest allows 1 to 32 unique absolute http or https URLs",
+      "The redirect_uri sent at token exchange must match the one used in the authorize request",
+      "Exact-match and localhost rules aren't documented"
+    ],
+    "claimIds": ["c-authorize-url", "c-token-url", "c-client-auth", "c-pkce", "c-access-24h", "c-refresh-migration", "c-rotation-grace", "c-secret-rotation", "c-manifest-redirects", "c-redirect-match", "c-refresh-inactivity"]
+  },
+  "profiles": [
+    {
+      "id": "issues-rw-any-workspace",
+      "intent": "Read and write issues in any user's workspace",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        { "name": "read", "purpose": "Default and always present; reads issues, teams and the viewer (the Stage 1 check)", "claimIds": ["c-scopes"] },
+        { "name": "write", "purpose": "General write access to the user's account; needed to update issues, not just create them", "claimIds": ["c-scopes", "c-write-needed-update"] },
+        { "name": "issues:create", "purpose": "Narrower alternative if you only create issues (and their attachments) and never edit them", "claimIds": ["c-scopes"] }
+      ],
+      "facts": {
+        "selfServeCreation": { "value": true, "claimIds": ["c-where-create", "c-manifest-prefill"] },
+        "requiresAppReview": { "value": "not_mentioned", "claimIds": [] },
+        "requiresSecurityAssessment": { "value": "not_mentioned", "claimIds": [] },
+        "requiresBusinessVerification": { "value": "not_mentioned", "claimIds": [] },
+        "requiresDomainVerification": { "value": "not_mentioned", "claimIds": [] },
+        "partnerProgramGated": { "value": false, "claimIds": ["c-distribution-public"] },
+        "paidAccessRequired": { "value": "not_mentioned", "claimIds": [] },
+        "legalEntityRequired": { "value": "not_mentioned", "claimIds": [] },
+        "marketplaceListingOptional": { "value": true, "claimIds": ["c-distribution-public", "c-directory-criteria"] },
+        "testModeLimits": {
+          "text": "No test or development tier is documented. A private app (the default) can only be used in the workspace that created it; switching distribution to public lets other workspaces install it.",
+          "claimIds": ["c-distribution-public"]
+        },
+        "configGotchas": [
+          { "text": "Turn on Public (distribution: public) or other workspaces can't install the app; private is the default.", "stepId": "make-public", "claimIds": ["c-distribution-public", "c-public-switch-vendor"] },
+          { "text": "Scopes are comma-separated, not space-separated.", "stepId": "authorize", "claimIds": ["c-authorize-params"] },
+          { "text": "Store the new refresh token after every refresh; the old one is replaced.", "stepId": "handle-refresh", "claimIds": ["c-rotation-grace"] },
+          { "text": "App names can't contain \"Linear\" or start with http:// or https://.", "stepId": "create-app", "claimIds": ["c-manifest-name"] }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Self-serve for a workspace admin: create an OAuth2 application in Settings > Administration > API, add a callback URL, and run one code flow.",
+          "time": { "range": null, "basis": "unknown", "claimIds": [] },
+          "claimIds": ["c-where-create", "c-admin-page", "c-manifest-prefill"]
+        },
+        "stage2": {
+          "band": "None documented",
+          "summary": "No review, verification or fee is documented for a public OAuth app acting as the user: setting distribution to public makes it installable by other workspaces. Each customer workspace on a paid plan can turn on Third-Party App Approvals, so their admin may have to approve you first.",
+          "time": {
+            "range": null,
+            "basis": "unknown",
+            "startsWhen": "when a member of a workspace with Third-Party App Approvals turned on requests approval",
+            "claimIds": ["c-third-party-approvals"]
+          },
+          "claimIds": ["c-distribution-public", "c-third-party-approvals", "c-approval-flow"]
+        }
+      },
+      "blockerTags": ["admin_consent_or_per_tenant"],
+      "stage1DoneWhen": {
+        "text": "POST https://api.linear.app/graphql with Authorization: Bearer ACCESS_TOKEN and the query { viewer { id name email } } returns the authorizing user's id, and your token response included a refresh_token and expires_in of about 86399.",
+        "claimIds": ["c-graphql-viewer", "c-token-response", "c-access-24h"]
+      },
+      "blockedBy": [
+        { "party": "tenant_admin", "how": "On any paid plan, a workspace admin (owner on Enterprise) can turn on Third-Party App Approvals; members then can't install your app until it's approved, and a denial is shown to them with its reason.", "claimIds": ["c-third-party-approvals", "c-approval-flow"] },
+        { "party": "you", "how": "Leaving the app private (the default) means only your own workspace can authorize it. Creating the app also needs admin rights in the workspace that owns it.", "claimIds": ["c-distribution-public", "c-admin-page"] },
+        { "party": "provider", "how": "Per-user rate limits apply (5,000 requests and 2,000,000 complexity points per hour for OAuth apps); raising them is case by case through support.", "claimIds": ["c-rate-limits", "c-rate-raise"] }
+      ],
+      "stepIds": ["owner-workspace", "create-app", "make-public", "copy-credentials", "authorize", "exchange-code", "check-token", "handle-refresh", "tenant-approval"],
+      "requirementIds": ["admin-workspace", "app-identity", "callback-url"],
+      "limitIds": ["rate-requests", "rate-complexity", "query-complexity", "private-default"],
+      "blockerIds": ["other-workspace-cant-install", "refresh-invalid-grant", "rate-limited", "approval-required", "cant-update-issues"],
+      "bottomLine": "A first token takes one sitting if you're a workspace admin. No review stands between a public app and other workspaces; the real risks are tenant admins who require app approval and rotating refresh tokens that break under concurrent refreshes.",
+      "topRisks": [
+        "Forgetting to set the app to Public keeps every other workspace out",
+        "Rotating refresh tokens: a stale or double refresh returns invalid_grant and forces the user to reconnect",
+        "Customer workspaces with Third-Party App Approvals on block members until an admin approves"
+      ]
+    }
+  ],
+  "defaultProfileId": "issues-rw-any-workspace",
+  "steps": [
+    {
+      "id": "owner-workspace",
+      "stage": 1,
+      "title": "Pick the workspace that will own the app",
+      "owner": "developer",
+      "instructions": [
+        "Use a dedicated workspace for the OAuth app: every admin in that workspace gets access to it.",
+        "You need admin permissions in that workspace to open the API settings page."
+      ],
+      "links": [
+        { "label": "OAuth 2.0 authentication", "url": "https://linear.app/developers/oauth-2-0-authentication" },
+        { "label": "API and Webhooks (admin docs)", "url": "https://linear.app/docs/api-and-webhooks" }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-dedicated-workspace", "c-admin-page"]
+    },
+    {
+      "id": "create-app",
+      "stage": 1,
+      "title": "Create the OAuth2 application",
+      "owner": "developer",
+      "instructions": [
+        "Go to Settings > Administration > API and create a new OAuth application (direct form: https://linear.app/settings/api/applications/new).",
+        "Fill in the application name (2 to 80 characters, no \"Linear\", no http(s):// prefix), developer name, and a homepage or docs URL. An icon and description are optional.",
+        "Add your callback URL(s) under the callback/redirect URLs field (up to 32, absolute http or https).",
+        "Leave client credentials off; this intent uses the authorization code flow.",
+        "Optional: build the form as a manifest and pass it as URL parameters to pre-fill the page."
+      ],
+      "links": [
+        { "label": "Create OAuth app", "url": "https://linear.app/settings/api/applications/new" },
+        { "label": "OAuth app manifests", "url": "https://linear.app/developers/oauth-app-manifests" }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": ["c-where-create", "c-admin-page", "c-manifest-prefill", "c-manifest-name", "c-manifest-redirects", "c-vendor-labels"]
+    },
+    {
+      "id": "make-public",
+      "stage": 1,
+      "title": "Turn on Public so other workspaces can install",
+      "owner": "developer",
+      "instructions": [
+        "Switch the app's distribution from private (default) to public.",
+        "Without it, only your own workspace can authorize the app."
+      ],
+      "links": [{ "label": "OAuth app manifests: distribution", "url": "https://linear.app/developers/oauth-app-manifests" }],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": ["c-distribution-public", "c-public-switch-vendor"]
+    },
+    {
+      "id": "copy-credentials",
+      "stage": 1,
+      "title": "Copy the Client ID and Client Secret",
+      "owner": "developer",
+      "instructions": [
+        "Copy the client ID and client secret from the app's page.",
+        "Keep the secret on your server or in a secret manager. Public clients should use PKCE, where the secret is optional.",
+        "If it leaks, use Rotate secret next to the client secret in Settings > API."
+      ],
+      "links": [],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": ["c-vendor-labels", "c-pkce", "c-secret-rotation"]
+    },
+    {
+      "id": "authorize",
+      "stage": 1,
+      "title": "Send a user through the authorize URL",
+      "owner": "developer",
+      "instructions": [
+        "Open https://linear.app/oauth/authorize?client_id=CLIENT_ID&redirect_uri=YOUR_URI&response_type=code&scope=read,write&state=RANDOM",
+        "Scopes are comma-separated. Use read,issues:create instead if you never edit issues.",
+        "Leave actor unset (defaults to user) so issues are created as the person who authorized.",
+        "For PKCE add code_challenge and code_challenge_method=S256. Add prompt=consent to let a user connect another workspace.",
+        "Approve, then check that the state returned with code matches what you sent."
+      ],
+      "links": [{ "label": "OAuth 2.0 authentication", "url": "https://linear.app/developers/oauth-2-0-authentication" }],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-authorize-url", "c-authorize-params", "c-scopes", "c-actor", "c-pkce", "c-prompt-consent"]
+    },
+    {
+      "id": "exchange-code",
+      "stage": 1,
+      "title": "Exchange the code for tokens",
+      "owner": "agent",
+      "instructions": [
+        "POST to https://api.linear.app/oauth/token with Content-Type: application/x-www-form-urlencoded.",
+        "Send grant_type=authorization_code, code, the same redirect_uri, client_id, and client_secret (or code_verifier for PKCE). Basic auth also works for the client credentials.",
+        "Store access_token, refresh_token, expires_in and scope. Apps created before December 1, 2023 get scope back as an array."
+      ],
+      "links": [{ "label": "OAuth 2.0 authentication", "url": "https://linear.app/developers/oauth-2-0-authentication" }],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-token-url", "c-client-auth", "c-pkce", "c-redirect-match", "c-token-response", "c-scope-array"]
+    },
+    {
+      "id": "check-token",
+      "stage": 1,
+      "title": "Check the token works",
+      "owner": "agent",
+      "instructions": [
+        "POST https://api.linear.app/graphql with Authorization: Bearer ACCESS_TOKEN and { viewer { id name email } }.",
+        "Expect the user's id back. To test writes, query teams for a teamId and run issueCreate with title and teamId."
+      ],
+      "links": [{ "label": "GraphQL API", "url": "https://linear.app/developers/graphql" }],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-graphql-viewer", "c-issue-create"]
+    },
+    {
+      "id": "handle-refresh",
+      "stage": 1,
+      "title": "Wire up token refresh",
+      "owner": "agent",
+      "instructions": [
+        "Access tokens last 24 hours. Before expiry, POST grant_type=refresh_token and refresh_token to the token endpoint (PKCE tokens need only client_id).",
+        "Each refresh returns a new refresh token: save it atomically and allow one refresh per connection at a time.",
+        "If a refresh response is lost to a network error, replay the same request within 30 minutes to recover the new token."
+      ],
+      "links": [
+        { "label": "OAuth 2.0 authentication", "url": "https://linear.app/developers/oauth-2-0-authentication" },
+        { "label": "Nango: Linear invalid_grant", "url": "https://nango.dev/blog/linear-oauth-refresh-token-invalid-grant" }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-access-24h", "c-rotation-grace", "c-invalid-grant-race"]
+    },
+    {
+      "id": "tenant-approval",
+      "stage": 2,
+      "title": "Handle customer workspaces that require app approval",
+      "owner": "provider",
+      "instructions": [
+        "If a customer workspace has Third-Party App Approvals turned on, a member who tries to install your app sees a request screen and can add a reason.",
+        "Their admin (owner on Enterprise) gets an email and in-app notification and approves or denies on the workspace Applications page; the member is told the outcome.",
+        "Give customers a short description of what your app does with their issues to help the request through. No timeline is documented."
+      ],
+      "links": [{ "label": "Third-Party App Approvals", "url": "https://linear.app/docs/third-party-application-approvals" }],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-third-party-approvals", "c-approval-flow"]
+    }
+  ],
+  "requirements": [
+    { "id": "admin-workspace", "label": "Admin seat in the owning workspace", "detail": "The API settings page that holds OAuth applications is admin-only; every admin of that workspace can see the app.", "howToPrepare": "Create or choose a dedicated workspace where you are admin.", "agentCanDraft": false, "claimIds": ["c-admin-page", "c-dedicated-workspace"] },
+    { "id": "app-identity", "label": "App name, developer name and homepage URL", "detail": "Name and developer name 2 to 80 characters; the app name can't include \"Linear\" or an http(s):// prefix. Homepage or docs URL required; description (up to 1,000 characters) and icon (256x256 recommended) optional.", "howToPrepare": "Pick a name without \"Linear\" in it and have a public homepage ready.", "agentCanDraft": true, "claimIds": ["c-manifest-name"] },
+    { "id": "callback-url", "label": "Callback URL", "detail": "At least one absolute http or https redirect URL (up to 32).", "howToPrepare": "Register the exact URL your server will send as redirect_uri.", "agentCanDraft": true, "claimIds": ["c-manifest-redirects", "c-redirect-match"] }
+  ],
+  "limits": [
+    { "id": "rate-requests", "what": "OAuth app request rate", "value": "5,000 requests per hour per user (or app user)", "whenHit": "GraphQL returns HTTP 400 with a RATELIMITED error code; X-RateLimit-Requests-* headers show the reset. Support can raise limits case by case.", "claimIds": ["c-rate-limits", "c-rate-raise"] },
+    { "id": "rate-complexity", "what": "OAuth app complexity budget", "value": "2,000,000 complexity points per hour per user", "whenHit": "Same RATELIMITED error; track X-RateLimit-Complexity-* and per-query X-Complexity headers.", "claimIds": ["c-rate-limits"] },
+    { "id": "query-complexity", "what": "Single query complexity", "value": "10,000 points", "whenHit": "The query is rejected outright; split it or paginate.", "claimIds": ["c-rate-limits"] },
+    { "id": "private-default", "what": "Who can install a new app", "value": "Only the owning workspace (distribution defaults to private)", "whenHit": "Other workspaces can't authorize until you set the app to public.", "claimIds": ["c-distribution-public"] }
+  ],
+  "blockers": [
+    { "id": "other-workspace-cant-install", "symptom": "Users outside your workspace can't authorize the app", "cause": "The app is still private, the default distribution", "fix": "Turn on Public (distribution: public) in the app's settings", "stepId": "make-public", "claimIds": ["c-distribution-public", "c-public-switch-vendor"] },
+    { "id": "refresh-invalid-grant", "symptom": "Refresh returns invalid_grant", "cause": "A stale refresh token after rotation, often two workers refreshing at once, or the user revoked the app", "fix": "Persist each new refresh token atomically and serialize refreshes; replay within the 30-minute grace window; otherwise ask the user to reconnect", "stepId": "handle-refresh", "claimIds": ["c-rotation-grace", "c-invalid-grant-race"] },
+    { "id": "rate-limited", "symptom": "HTTP 400 with RATELIMITED in errors", "cause": "Per-user hourly request or complexity budget exhausted", "fix": "Back off until the reset header; reduce query complexity; ask support for a temporary increase", "claimIds": ["c-rate-limits", "c-rate-raise"] },
+    { "id": "approval-required", "symptom": "Member sees a request-approval screen instead of the consent screen", "cause": "The workspace has Third-Party App Approvals turned on", "fix": "The member requests approval and a workspace admin approves it on the Applications page", "stepId": "tenant-approval", "claimIds": ["c-third-party-approvals", "c-approval-flow"] },
+    { "id": "cant-update-issues", "symptom": "Creating issues works but updates fail", "cause": "Only issues:create was requested, which covers creating issues and attachments", "fix": "Request write and have users re-authorize", "stepId": "authorize", "claimIds": ["c-scopes", "c-write-needed-update"] }
+  ],
+  "nuances": [
+    { "id": "refresh-migration", "text": "Since April 1, 2026 all OAuth2 apps use refresh tokens with 24-hour access tokens. Ignore older guides that mention a Refresh Tokens toggle or 10-year tokens.", "stepId": "handle-refresh", "claimIds": ["c-refresh-migration", "c-access-24h", "c-vendor-refresh-toggle"] },
+    { "id": "rotation", "text": "Refresh tokens rotate on every refresh, with a 30-minute grace window to replay a lost response.", "stepId": "handle-refresh", "claimIds": ["c-rotation-grace"] },
+    { "id": "actor-user-vs-app", "text": "actor=user (default) makes changes as the authorizing person, which fits this intent. actor=app installs the app into the workspace as its own app user, needs admin permissions to install, can't be combined with the admin scope, and is aimed at agents and service accounts.", "stepId": "authorize", "claimIds": ["c-actor", "c-actor-app-admin"] },
+    { "id": "agent-directory", "text": "A public actor=user app is installable by other workspaces; the integration directory is required only for agents.", "stepId": "make-public", "claimIds": ["c-agent-directory", "c-distribution-public"] },
+    { "id": "directory-optional", "text": "The integration directory is a separate listing that accepts useful integrations from formal companies (not scripts or hobby apps) and asks for icons and showcase images. It isn't needed for an actor=user public app.", "stepId": "make-public", "claimIds": ["c-directory-criteria", "c-distribution-public"] },
+    { "id": "label-conflict", "text": "The page may appear as Settings > Administration > API or Settings > API > OAuth applications. Same page.", "stepId": "create-app", "claimIds": ["c-where-create", "c-vendor-labels", "c-secret-rotation"] },
+    { "id": "comma-scopes", "text": "Scopes are comma-separated in the authorize URL. Apps created before December 1, 2023 receive scope as an array in the token response.", "stepId": "authorize", "claimIds": ["c-authorize-params", "c-scope-array"] },
+    { "id": "bearer-vs-key", "text": "OAuth tokens use Authorization: Bearer TOKEN; personal API keys go in the Authorization header without Bearer.", "stepId": "check-token", "claimIds": ["c-graphql-viewer"] },
+    { "id": "revoke", "text": "Revoke on disconnect with POST https://api.linear.app/oauth/revoke and a token form field (optional token_type_hint).", "claimIds": ["c-revoke"] },
+    { "id": "rate-per-user", "text": "OAuth rate limits are counted per user, not per app; workspace-level apps using actor authorization get higher limits based on paid seats.", "claimIds": ["c-rate-limits", "c-rate-raise"] }
+  ],
+  "notFound": [
+    { "item": "Refresh token lifetime", "why": "Not stated; may expire after inactivity.", "claimIds": ["c-refresh-inactivity"] },
+    { "item": "Redirect URI exact-match and localhost rules", "why": "Only stated: the token-exchange redirect_uri must match the authorize one, and URLs must be absolute http or https.", "claimIds": ["c-redirect-match", "c-manifest-redirects"] },
+    { "item": "Whether Third-Party App Approvals is on by default", "why": "The default isn't stated.", "claimIds": ["c-third-party-approvals"] },
+    { "item": "Whether actor=user installs need an admin when approvals are off", "why": "Admin permissions are stated only for actor=app installs.", "claimIds": ["c-actor-app-admin"] },
+    { "item": "Any review for public OAuth apps", "why": "No review, security assessment, business or domain verification, fee or legal-entity requirement found. Recorded as not_mentioned, not as \"not required\".", "claimIds": [] },
+    { "item": "Integration directory review time", "why": "Not stated on the directory page; and the directory is out of scope for this intent.", "claimIds": ["c-directory-criteria"] },
+    { "item": "Live settings labels", "why": "Not checked in a signed-in workspace; labels may differ.", "claimIds": ["c-vendor-labels"] }
+  ],
+  "claims": [
+    {
+      "id": "c-where-create",
+      "statement": "OAuth applications and webhooks are created and managed in Settings > Administration > API.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/docs/api-and-webhooks.md", "title": "API and Webhooks (Linear docs)", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-admin-page",
+      "statement": "Admin permissions in the workspace are required to view the API settings page.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/docs/api-and-webhooks.md", "title": "API and Webhooks (Linear docs)", "kind": "official", "read": "full", "retrievedAt": "2026-10-23", "quote": "Admin permissions in your workspace are necessary to view this page." }
+      ]
+    },
+    {
+      "id": "c-dedicated-workspace",
+      "statement": "Linear recommends creating a workspace just to manage the OAuth2 application, since every admin in it has access.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-manifest-prefill",
+      "statement": "The Create OAuth app page at linear.app/settings/api/applications/new can be pre-filled with URL parameters or a URL-encoded JSON manifest.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-app-manifests.md", "title": "OAuth application manifests", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-manifest-name",
+      "statement": "Manifest fields: client_name (required, 2 to 80 characters, may not contain \"Linear\" or an http(s):// prefix), client_uri (required), developer name (required, 2 to 80), optional description (max 1,000) and icon URL (256x256 recommended).",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-app-manifests.md", "title": "OAuth application manifests", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-manifest-redirects",
+      "statement": "Redirect URIs are required: 1 to 32 unique absolute http or https URLs. authorization_code is always a grant type; client_credentials is optional.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-app-manifests.md", "title": "OAuth application manifests", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-distribution-public",
+      "statement": "An app's distribution is private by default (current workspace only); public makes it installable by other workspaces.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-app-manifests.md", "title": "OAuth application manifests", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-public-switch-vendor",
+      "statement": "Vendor setup guides show a Public switch on the app form that must be on for other workspaces to install the app.",
+      "label": "reported",
+      "sources": [
+        { "url": "https://nango.dev/docs/api-integrations/linear/how-to-register-your-own-linear-api-oauth-app", "title": "Nango: register your own Linear OAuth app", "kind": "vendor", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-vendor-labels",
+      "statement": "A vendor guide labels the path Settings > API > OAuth applications, with a + icon, Callback URLs field, Create button, and Client ID / Client Secret shown after creation.",
+      "label": "reported",
+      "sources": [
+        { "url": "https://nango.dev/docs/api-integrations/linear/how-to-register-your-own-linear-api-oauth-app", "title": "Nango: register your own Linear OAuth app", "kind": "vendor", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-vendor-refresh-toggle",
+      "statement": "A vendor guide describes a Refresh Tokens option on apps (on by default for new apps), a deadline of October 1, 2025 for existing apps, and older connections keeping a 10-year expiry.",
+      "label": "reported",
+      "sources": [
+        { "url": "https://nango.dev/docs/api-integrations/linear/how-to-register-your-own-linear-api-oauth-app", "title": "Nango: register your own Linear OAuth app", "kind": "vendor", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-authorize-url",
+      "statement": "The authorization endpoint is GET https://linear.app/oauth/authorize.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-authorize-params",
+      "statement": "Authorize parameters: client_id, redirect_uri, response_type=code and a comma-separated scope are required; state is optional but recommended and must match on return.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-prompt-consent",
+      "statement": "prompt=consent forces the consent screen, which lets a user connect additional workspaces.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-scopes",
+      "statement": "Scopes: read (default, always present), write (write access to the user's account), issues:create (create issues and attachments), comments:create, timeSchedule:write, and admin (only if absolutely needed).",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-write-needed-update",
+      "statement": "Updating existing issues requires write; issues:create is described only as covering creation of issues and attachments.",
+      "label": "uncertain",
+      "unsourced": true,
+      "sources": []
+    },
+    {
+      "id": "c-actor",
+      "statement": "actor=user (default) creates resources as the authorizing user; actor=app creates them as the application, for agents and service accounts.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://linear.app/developers/oauth-actor-authorization.md", "title": "OAuth actor authorization", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-actor-app-admin",
+      "statement": "An actor=app install is workspace-scoped and needs admin permissions to complete; actor=app integrations can't also request the admin scope.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/agents.md", "title": "Linear for Agents: Getting started", "kind": "official", "read": "full", "retrievedAt": "2026-10-23", "quote": "admin permissions are required to complete the installation" }
+      ]
+    },
+    {
+      "id": "c-agent-directory",
+      "statement": "Linear's agent docs (Developer Preview) say to submit an agent to the integration directory to make it available to other workspaces.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/agents.md", "title": "Linear for Agents: Getting started", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-directory-criteria",
+      "statement": "The integration directory accepts integrations Linear deems useful and built by formal companies, generally not scripts or hobby apps; submissions need color and white 320x320 icons and 1 to 3 showcase images. No timeline is given.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/integration-directory.md", "title": "Integration Directory (developers)", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-pkce",
+      "statement": "PKCE is supported with code_challenge_method plain or S256; with PKCE the token request sends code_verifier and client_secret is optional.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-token-url",
+      "statement": "The token endpoint is POST https://api.linear.app/oauth/token with an application/x-www-form-urlencoded body.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-client-auth",
+      "statement": "Client authentication at the token endpoint is HTTP Basic (client_id:client_secret) or client_id and client_secret as form parameters.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-redirect-match",
+      "statement": "The redirect_uri in the token exchange must match the one used in the authorization request.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-token-response",
+      "statement": "The code exchange returns an access token, a refresh token, expires_in and scope.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-scope-array",
+      "statement": "Apps created before December 1, 2023 receive scope as an array in the token response.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-access-24h",
+      "statement": "User-flow access tokens are valid for 24 hours (example expires_in 86399); client credentials tokens last 30 days.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-refresh-migration",
+      "statement": "All OAuth2 applications were migrated to the new refresh token system on April 1, 2026.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23", "quote": "migrated to the new refresh token system on April 1, 2026" }
+      ]
+    },
+    {
+      "id": "c-rotation-grace",
+      "statement": "Refreshing (grant_type=refresh_token) returns a new access token and a new refresh token; a lost response can be replayed within a 30-minute grace period.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-refresh-inactivity",
+      "statement": "A vendor reports Linear refresh tokens can expire from inactivity, requiring re-authorization; Linear's docs state no refresh token lifetime.",
+      "label": "reported",
+      "sources": [
+        { "url": "https://nango.dev/blog/linear-oauth-refresh-token-invalid-grant", "title": "Nango: Linear OAuth refresh token invalid_grant", "kind": "vendor", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-invalid-grant-race",
+      "statement": "invalid_grant on refresh is most often a stale rotated refresh token, commonly from concurrent workers refreshing the same connection; also revocation by the user or an admin.",
+      "label": "reported",
+      "sources": [
+        { "url": "https://nango.dev/blog/linear-oauth-refresh-token-invalid-grant", "title": "Nango: Linear OAuth refresh token invalid_grant", "kind": "vendor", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-secret-rotation",
+      "statement": "Settings > API offers Rotate secret for the client secret; rotating invalidates client credentials tokens immediately, while existing access and refresh tokens keep working and switch to the new secret on next refresh.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-revoke",
+      "statement": "Tokens are revoked with POST https://api.linear.app/oauth/revoke using a token form field and optional token_type_hint.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/oauth-2-0-authentication.md", "title": "OAuth 2.0 authentication", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-graphql-viewer",
+      "statement": "The GraphQL endpoint is https://api.linear.app/graphql; OAuth tokens use Authorization: Bearer, API keys omit Bearer; the viewer query returns the authenticated user (id, name, email).",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/graphql.md", "title": "GraphQL API: Getting started", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-issue-create",
+      "statement": "issueCreate takes an input with title, description and teamId and returns success plus the issue's id; team IDs come from a teams query.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/graphql.md", "title": "GraphQL API: Getting started", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-third-party-approvals",
+      "statement": "On any paid plan, a workspace admin (owner on Enterprise) can turn on Third-Party App Approvals in Settings > Administration > Security; members then need approval to install unapproved apps.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/docs/third-party-application-approvals.md", "title": "Third-Party App Approvals", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-approval-flow",
+      "statement": "A member requests approval with an optional reason; approvers are notified by email and in-app and decide on the Applications page; the requester is told the outcome and any denial reason.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/docs/third-party-application-approvals.md", "title": "Third-Party App Approvals", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-rate-limits",
+      "statement": "OAuth apps get 5,000 requests and 2,000,000 complexity points per hour per user; exceeding returns HTTP 400 with a RATELIMITED error code; single queries over 10,000 complexity are rejected.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/rate-limiting.md", "title": "Rate limiting", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-rate-raise",
+      "statement": "Linear support can temporarily raise rate limits case by case; workspace-level apps using actor authorization get higher limits based on paid users.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://linear.app/developers/rate-limiting.md", "title": "Rate limiting", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    }
+  ]
+}

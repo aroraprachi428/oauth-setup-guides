@@ -1,0 +1,625 @@
+{
+  "slug": "dropbox",
+  "app": {
+    "name": "Dropbox",
+    "website": "https://www.dropbox.com",
+    "category": "Storage",
+    "developerPortalUrl": "https://www.dropbox.com/developers/apps",
+    "primaryDocsUrl": "https://docs.dropboxapi.com/dropbox-api/docs/oauth"
+  },
+  "source": "curated",
+  "version": 1,
+  "lastVerified": "2026-10-23",
+  "oauthSupport": "public",
+  "technical": {
+    "authorizationUrl": "https://www.dropbox.com/oauth2/authorize",
+    "tokenUrl": "https://api.dropboxapi.com/oauth2/token",
+    "oauthVersion": "2.0",
+    "pkce": "supported",
+    "clientSecretHandling": "Server apps send the App secret to the token endpoint (POST parameters or HTTP Basic auth). Dropbox offers PKCE for clients that cannot keep the secret, and its PKCE examples omit the secret.",
+    "refreshTokens": {
+      "supported": true,
+      "expiry": "No automatic expiry; valid until revoked unless you set refresh_token_expiration_seconds at code exchange",
+      "notes": "Only returned when the authorize URL has token_access_type=offline. A refresh does not return a new refresh token (no rotation)."
+    },
+    "accessTokenLifetime": "Short-lived; read expires_in from the token response (Dropbox's example shows 14400 seconds, i.e. 4 hours)",
+    "redirectUriRules": [
+      "Must exactly match a URI registered in the App Console",
+      "HTTPS required except for localhost",
+      "localhost URIs must be registered too, including the port"
+    ],
+    "claimIds": ["c-authorize-url", "c-token-url", "c-client-auth", "c-pkce", "c-offline", "c-refresh-no-expiry", "c-expires", "c-redirect-rules"]
+  },
+  "profiles": [
+    {
+      "id": "full-dropbox-rw",
+      "intent": "Read and write files in a user's full Dropbox",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        { "name": "account_info.read", "purpose": "Required on every user-linked app; also needed for users/get_current_account, the Stage 1 check", "claimIds": ["c-console-max", "c-scopes-endpoints"] },
+        { "name": "files.metadata.read", "purpose": "List folders and file metadata (e.g. files/list_folder)", "claimIds": ["c-scopes-endpoints"] },
+        { "name": "files.content.read", "purpose": "Download file contents (files/download)", "claimIds": ["c-scopes-endpoints"] },
+        { "name": "files.content.write", "purpose": "Upload and delete files (files/upload, files/delete_v2)", "claimIds": ["c-scopes-endpoints"] }
+      ],
+      "facts": {
+        "selfServeCreation": { "value": true, "claimIds": ["c-create-wizard"] },
+        "requiresAppReview": { "value": true, "claimIds": ["c-50-window", "c-review-criteria"] },
+        "requiresSecurityAssessment": { "value": "not_mentioned", "claimIds": [] },
+        "requiresBusinessVerification": { "value": "not_mentioned", "claimIds": [] },
+        "requiresDomainVerification": { "value": "not_mentioned", "claimIds": [] },
+        "partnerProgramGated": { "value": false, "claimIds": ["c-review-trigger"] },
+        "paidAccessRequired": { "value": "not_mentioned", "claimIds": [] },
+        "legalEntityRequired": { "value": "not_mentioned", "claimIds": [] },
+        "marketplaceListingOptional": { "value": "not_mentioned", "claimIds": [] },
+        "testModeLimits": {
+          "text": "Development status: at first only your own account can link. After you turn on additional users, up to 500 accounts can link, but once 50 have linked you have two weeks to get production approval.",
+          "claimIds": ["c-dev-status", "c-50-window"]
+        },
+        "configGotchas": [
+          { "text": "Add token_access_type=offline to the authorize URL or you get no refresh token (the default is online).", "stepId": "authorize", "claimIds": ["c-offline"] },
+          { "text": "Register localhost redirect URIs explicitly, with the exact port.", "stepId": "add-redirect", "claimIds": ["c-redirect-rules"] }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Self-serve: create a scoped app in the App Console, register a redirect URI and complete one code flow.",
+          "time": { "range": null, "basis": "unknown", "claimIds": [] },
+          "claimIds": ["c-create-wizard", "c-dev-status"]
+        },
+        "stage2": {
+          "band": "Days",
+          "summary": "Production approval is required before more than 50 users can keep linking. Review only starts at 50 linked users, and a two-week deadline starts at the same moment.",
+          "time": {
+            "range": "A few business days per production request",
+            "basis": "official",
+            "startsWhen": "when the app has 50 linked users (or an early review is granted)",
+            "claimIds": ["c-review-time", "c-review-trigger"]
+          },
+          "claimIds": ["c-50-window", "c-review-trigger", "c-review-time", "c-unfreeze"]
+        }
+      },
+      "blockerTags": ["user_cap", "review"],
+      "stage1DoneWhen": {
+        "text": "POST https://api.dropboxapi.com/2/users/get_current_account with your access token returns 200 with an account_id, and your token response included a refresh_token.",
+        "claimIds": ["c-get-account", "c-offline"]
+      },
+      "blockedBy": [
+        { "party": "provider", "how": "Freezes new links two weeks after your 50th linked user if production isn't approved, and can deny the production request.", "claimIds": ["c-50-window", "c-unfreeze", "c-denied-resubmit"] },
+        { "party": "you", "how": "A name, logo or privacy policy that breaks the branding guide, or permissions broader than you need, gets the request rejected.", "claimIds": ["c-review-criteria", "c-branding-name", "c-branding-logo", "c-privacy-policy"] }
+      ],
+      "stepIds": ["create-app", "set-permissions", "add-redirect", "copy-credentials", "authorize", "exchange-code", "check-token", "enable-users", "prepare-production", "apply-production", "watch-window"],
+      "requirementIds": ["privacy-policy", "app-logo", "compliant-name", "use-description", "scope-justification", "early-review-reason"],
+      "limitIds": ["dev-own-account", "dev-500", "fifty-user-window"],
+      "blockerIds": ["invalid-redirect", "no-refresh-token", "expired-token", "frozen", "not-reviewed", "rejected"],
+      "bottomLine": "Getting a first token takes one sitting. The real gate is production approval, which you can't get reviewed until 50 users have linked, and a two-week clock starts at that same moment.",
+      "topRisks": [
+        "Two weeks after your 50th user, new users can't link until production is approved",
+        "Full Dropbox access may be challenged as unnecessarily broad",
+        "The app name is locked after approval, and branding rules forbid names that start with \"drop\""
+      ]
+    }
+  ],
+  "defaultProfileId": "full-dropbox-rw",
+  "steps": [
+    {
+      "id": "create-app",
+      "stage": 1,
+      "title": "Create the app in the App Console",
+      "owner": "developer",
+      "instructions": [
+        "Sign in at https://www.dropbox.com/developers/apps (App Console) and click Create app.",
+        "Choose Scoped access as the API type.",
+        "Choose Full Dropbox as the access type (App folder would limit you to one folder).",
+        "Enter an app name that follows the branding guide: no \"Dropbox\", must not start with \"drop\". The name is locked once production is approved.",
+        "Click Create app."
+      ],
+      "links": [
+        { "label": "App Console", "url": "https://www.dropbox.com/developers/apps" },
+        { "label": "Tutorial: creating an app", "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/tutorial/app-console" },
+        { "label": "Branding guide", "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/branding-guide" }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": ["c-create-wizard", "c-choose-api", "c-access-types", "c-branding-name", "c-name-lock"]
+    },
+    {
+      "id": "set-permissions",
+      "stage": 1,
+      "title": "Enable scopes on the Permissions tab",
+      "owner": "agent",
+      "instructions": [
+        "Open the app's Permissions tab.",
+        "Enable files.metadata.read, files.content.read and files.content.write. account_info.read is required for user-linked apps and is on by default.",
+        "Save the change. Scopes enabled here are the maximum and the default your app can request.",
+        "Do this before any user authorizes: enabling a scope later doesn't change existing grants."
+      ],
+      "links": [{ "label": "Customizing scopes (Dropbox blog)", "url": "https://dropbox.tech/developers/customizing-scopes-in-oauth-flow" }],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": ["c-app-tabs", "c-console-max", "c-scopes-endpoints", "c-scope-change"]
+    },
+    {
+      "id": "add-redirect",
+      "stage": 1,
+      "title": "Register the redirect URI",
+      "owner": "agent",
+      "instructions": [
+        "On the Settings tab, under OAuth 2 > Redirect URIs, add your callback URL exactly as your app will send it.",
+        "Use HTTPS. Only localhost may use http, and even localhost must be registered (with its port).",
+        "If you won't use the implicit grant, disable it in the App Console."
+      ],
+      "links": [{ "label": "Authorization reference", "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization" }],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": ["c-app-tabs", "c-redirect-rules", "c-implicit"]
+    },
+    {
+      "id": "copy-credentials",
+      "stage": 1,
+      "title": "Copy the App key and App secret",
+      "owner": "developer",
+      "instructions": [
+        "On the Settings tab, copy the App key (your client_id) and App secret (your client_secret).",
+        "Store the secret on your server or in a secret manager only. Public clients should use PKCE instead of shipping the secret."
+      ],
+      "links": [],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-app-tabs", "c-pkce"]
+    },
+    {
+      "id": "authorize",
+      "stage": 1,
+      "title": "Send yourself through the authorize URL",
+      "owner": "developer",
+      "instructions": [
+        "Open https://www.dropbox.com/oauth2/authorize?client_id=APP_KEY&response_type=code&redirect_uri=YOUR_URI&token_access_type=offline&state=RANDOM",
+        "For PKCE, add code_challenge (43–128 characters) and code_challenge_method=S256.",
+        "Optionally add scope= with a space-separated subset; if omitted, all scopes enabled in the console are requested.",
+        "Sign in and approve. Dropbox redirects to your URI with code and state; check that state matches."
+      ],
+      "links": [{ "label": "OAuth guide", "url": "https://docs.dropboxapi.com/dropbox-api/docs/oauth" }],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-authorize-url", "c-offline", "c-pkce", "c-scope-param", "c-state"]
+    },
+    {
+      "id": "exchange-code",
+      "stage": 1,
+      "title": "Exchange the code for tokens",
+      "owner": "agent",
+      "instructions": [
+        "POST to https://api.dropboxapi.com/oauth2/token with grant_type=authorization_code, code, and the same redirect_uri.",
+        "Authenticate with client_id and client_secret (POST parameters or HTTP Basic), or for PKCE send client_id and code_verifier.",
+        "Store access_token, expires_in, refresh_token and account_id. Refresh with grant_type=refresh_token before expires_in runs out."
+      ],
+      "links": [{ "label": "Token endpoint reference", "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization" }],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-token-url", "c-client-auth", "c-pkce", "c-expires", "c-refresh-no-expiry"]
+    },
+    {
+      "id": "check-token",
+      "stage": 1,
+      "title": "Check the token works",
+      "owner": "agent",
+      "instructions": [
+        "POST https://api.dropboxapi.com/2/users/get_current_account with header Authorization: Bearer ACCESS_TOKEN and no body.",
+        "Expect 200 with account_id. Key users by account_id, not email."
+      ],
+      "links": [{ "label": "get_current_account", "url": "https://docs.dropboxapi.com/dropbox-api/api-reference/user-endpoints/users/get-current-account.md" }],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-get-account", "c-empty-body"]
+    },
+    {
+      "id": "enable-users",
+      "stage": 2,
+      "title": "Let other accounts link while in development",
+      "owner": "developer",
+      "instructions": [
+        "On the Settings tab under Development users, click Enable additional users.",
+        "Up to 500 accounts can then link, but the 50-user clock below applies."
+      ],
+      "links": [{ "label": "Developer guide: production approval", "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide" }],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": ["c-dev-status", "c-app-tabs"]
+    },
+    {
+      "id": "prepare-production",
+      "stage": 2,
+      "title": "Prepare the production application",
+      "owner": "developer",
+      "instructions": [
+        "Publish an app-specific privacy policy.",
+        "Prepare an app icon/logo that doesn't resemble Dropbox branding.",
+        "Write a description of how your app uses the API, including why it needs Full Dropbox rather than an App folder.",
+        "Check the app name against the branding guide; it can't change after approval."
+      ],
+      "links": [
+        { "label": "Branding guide", "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/branding-guide" },
+        { "label": "Developer guide", "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide" }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-privacy-policy", "c-branding-logo", "c-review-criteria", "c-name-lock"]
+    },
+    {
+      "id": "apply-production",
+      "stage": 2,
+      "title": "Apply for production",
+      "owner": "developer",
+      "instructions": [
+        "On the Settings tab under Status, click Apply for Production and complete the form.",
+        "You can submit anytime, but Dropbox won't review it until 50 users have linked, unless you fill in Request early review with evidence.",
+        "If denied, Dropbox sends feedback and you can resubmit."
+      ],
+      "links": [{ "label": "Developer guide: production approval", "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide" }],
+      "humanGate": "review_submission",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": ["c-app-tabs", "c-review-trigger", "c-denied-resubmit"]
+    },
+    {
+      "id": "watch-window",
+      "stage": 2,
+      "title": "Watch the two-week window after 50 users",
+      "owner": "provider",
+      "instructions": [
+        "Once 50 accounts have linked, you have two weeks to apply for and receive production approval.",
+        "If you miss it, new users can't link. Only production approval unfreezes the app; unlinking users doesn't."
+      ],
+      "links": [],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": ["c-50-window", "c-unfreeze", "c-review-time"]
+    }
+  ],
+  "requirements": [
+    { "id": "privacy-policy", "label": "Privacy policy", "detail": "A clear, app-specific privacy policy.", "howToPrepare": "Host it on your own site and describe what Dropbox data you access and why.", "agentCanDraft": true, "claimIds": ["c-privacy-policy"] },
+    { "id": "app-logo", "label": "App icon / logo", "detail": "Required in the production application. Must not resemble Dropbox logos or include the word Dropbox. Dropbox may show it on its authorization page.", "howToPrepare": "Use the logo you use elsewhere. Size and format requirements were not found.", "agentCanDraft": false, "claimIds": ["c-branding-logo", "c-review-criteria"] },
+    { "id": "compliant-name", "label": "Compliant app name", "detail": "No \"Dropbox\" or Dropbox product names, must not start with \"drop\" or imply affiliation. Locked after production approval.", "howToPrepare": "Pick the final name before applying.", "agentCanDraft": true, "claimIds": ["c-branding-name", "c-name-lock"] },
+    { "id": "use-description", "label": "Description of API use", "detail": "The application asks how your app uses the Dropbox API.", "howToPrepare": "Describe each feature and which scope it needs.", "agentCanDraft": true, "claimIds": ["c-review-criteria"] },
+    { "id": "scope-justification", "label": "Justification for Full Dropbox", "detail": "Dropbox checks whether the app requests an unnecessarily broad permission.", "howToPrepare": "Explain why an App folder wouldn't work for your use case.", "agentCanDraft": true, "claimIds": ["c-review-criteria", "c-access-types"] },
+    { "id": "early-review-reason", "label": "Early review evidence (optional)", "detail": "Only if you need approval before 50 users have linked.", "howToPrepare": "Fill the Request early review field with evidence of a compelling case.", "agentCanDraft": true, "claimIds": ["c-review-trigger"] }
+  ],
+  "limits": [
+    { "id": "dev-own-account", "what": "Linkable accounts at creation", "value": "Only the developer's own account", "whenHit": "Other users can't link until you click Enable additional users.", "claimIds": ["c-dev-status"] },
+    { "id": "dev-500", "what": "Accounts in development status", "value": "Up to 500 linked Dropbox users", "whenHit": "Production status is needed for a larger audience.", "claimIds": ["c-dev-status"] },
+    { "id": "fifty-user-window", "what": "Production deadline", "value": "Two weeks after the 50th linked user", "whenHit": "The app can't link more users until production is approved. Already-linked users may keep working (unconfirmed).", "claimIds": ["c-50-window", "c-unfreeze", "c-frozen-existing"] }
+  ],
+  "blockers": [
+    { "id": "invalid-redirect", "symptom": "Authorize page errors on redirect_uri", "cause": "The URI (including port) doesn't exactly match a registered one", "fix": "Register the exact URI under OAuth 2 > Redirect URIs", "stepId": "add-redirect", "claimIds": ["c-redirect-rules"] },
+    { "id": "no-refresh-token", "symptom": "Token response has no refresh_token", "cause": "token_access_type defaults to online", "fix": "Restart the flow with token_access_type=offline", "stepId": "authorize", "claimIds": ["c-offline"] },
+    { "id": "expired-token", "symptom": "401 expired_access_token after a few hours", "cause": "Short-lived access token, often a console-generated one used in production", "fix": "Use the code flow with offline access and refresh before expires_in", "stepId": "exchange-code", "claimIds": ["c-expires", "c-console-token"] },
+    { "id": "frozen", "symptom": "New users can't link the app", "cause": "Two weeks passed after 50 linked users without production approval", "fix": "Apply for and receive production status; unlinking users won't help", "stepId": "watch-window", "claimIds": ["c-50-window", "c-unfreeze"] },
+    { "id": "not-reviewed", "symptom": "Production request sits unreviewed", "cause": "Fewer than 50 users have linked", "fix": "Use the Request early review field with evidence, or grow to 50 users", "stepId": "apply-production", "claimIds": ["c-review-trigger"] },
+    { "id": "rejected", "symptom": "Production request denied", "cause": "Branding or terms violations, or an unnecessarily broad permission", "fix": "Fix what the feedback names and resubmit", "stepId": "prepare-production", "claimIds": ["c-review-criteria", "c-denied-resubmit"] }
+  ],
+  "nuances": [
+    { "id": "docs-moved", "text": "Developer docs now live at docs.dropboxapi.com; older guides and screenshots may be stale.", "claimIds": ["c-docs-moved"] },
+    { "id": "token-host", "text": "Token endpoint: api.dropboxapi.com/oauth2/token (some examples use api.dropbox.com).", "stepId": "exchange-code", "claimIds": ["c-token-url"] },
+    { "id": "pkce-wording", "text": "With PKCE, send client_id plus code_verifier and omit the secret.", "stepId": "copy-credentials", "claimIds": ["c-pkce"] },
+    { "id": "no-rotation", "text": "Refresh tokens don't rotate and don't expire unless you set an expiry at code exchange, so store one per user and revoke it on disconnect.", "stepId": "exchange-code", "claimIds": ["c-refresh-no-expiry"] },
+    { "id": "scope-changes", "text": "Enabling more scopes in the console doesn't change existing grants. Send users back through authorization; include_granted_scopes=user lets you request only the new ones.", "stepId": "set-permissions", "claimIds": ["c-scope-change"] },
+    { "id": "two-hosts", "text": "File content calls (upload, download) use content.dropboxapi.com; metadata and account calls use api.dropboxapi.com. files/upload is capped at 150 MiB; use upload sessions for larger files.", "stepId": "set-permissions", "claimIds": ["c-scopes-endpoints", "c-upload-limit"] },
+    { "id": "account-id", "text": "Key users by account_id. Email isn't a stable identifier; trust it only when email_verified is true.", "stepId": "check-token", "claimIds": ["c-get-account"] },
+    { "id": "no-approval-components", "text": "If you only need the Chooser, Saver or Embedder components, no permissions or production approval are needed.", "claimIds": ["c-dev-ok"] }
+  ],
+  "notFound": [
+    { "item": "Review time beyond \"a few business days\"", "why": "No official SLA; no independent wait-time reports found. Reaching 50 users depends on your own growth.", "claimIds": ["c-review-time"] },
+    { "item": "Whether Full Dropbox gets extra scrutiny vs App folder", "why": "Only \"broad permissions are checked\" is stated.", "claimIds": ["c-review-criteria"] },
+    { "item": "Full production application form", "why": "Only the use description, icon and early-review field are documented; the form itself needs a login.", "claimIds": ["c-review-criteria"] },
+    { "item": "Logo size and format", "why": "Not stated in the branding guide.", "claimIds": ["c-branding-logo"] },
+    { "item": "Do already-linked users keep working when frozen?", "why": "No official source.", "claimIds": ["c-frozen-existing"] },
+    { "item": "Development limits for team-linked apps", "why": "No official source.", "claimIds": ["c-team-limit"] },
+    { "item": "Security assessment, business verification, domain verification, legal entity or paid plan", "why": "None are mentioned in the production approval docs read. Recorded as not_mentioned, not as \"not required\".", "claimIds": [] },
+    { "item": "Whether Dropbox Business team admins can block user-linked apps", "why": "Not researched for this intent.", "claimIds": [] },
+    { "item": "Token endpoint error format", "why": "The authorization reference doesn't document /oauth2/token error responses.", "claimIds": ["c-token-url"] },
+    { "item": "Live App Console labels", "why": "Not checked in a signed-in console; labels may differ.", "claimIds": ["c-app-tabs"] }
+  ],
+  "claims": [
+    {
+      "id": "c-docs-moved",
+      "statement": "Dropbox developer reference pages on dropbox.com/developers/reference 301-redirect to docs.dropboxapi.com (observed for the developer guide, branding guide and getting-started pages).",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "Developer guide (redirect target)", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-create-wizard",
+      "statement": "Apps are created self-serve: developer portal > App Console > Create app, choose the access type, enter a name that follows the branding guide, then Create app.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/tutorial/app-console", "title": "Tutorial: Creating a Dropbox app and navigating the App Console", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-choose-api",
+      "statement": "The create-app wizard asks you to choose Scoped access, then Full Dropbox or App folder access.",
+      "label": "reported",
+      "sources": [
+        { "url": "https://nango.dev/docs/api-integrations/dropbox/how-to-register-your-own-dropbox-api-oauth-app", "title": "Nango: register your own Dropbox OAuth app", "kind": "vendor", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-access-types",
+      "statement": "App folder access covers only a dedicated folder in the user's Apps folder; Full Dropbox covers all of the user's files and folders.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "DBX Platform developer guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-app-tabs",
+      "statement": "An app's page has Settings, Permissions, Branding and Analytics sections. App key and App secret, OAuth 2 Redirect URIs, a generated access token, Development users > Enable additional users, and Status > Apply for Production are on Settings.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/tutorial/app-console", "title": "Tutorial: Creating a Dropbox app and navigating the App Console", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-redirect-rules",
+      "statement": "redirect_uri must exactly match a URI registered in the App Console; all URIs must be HTTPS except localhost, and localhost must be registered too.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23", "quote": "even 'localhost' must be listed if it is used for testing" }
+      ]
+    },
+    {
+      "id": "c-implicit",
+      "statement": "The implicit grant is kept only for compatibility; Dropbox recommends PKCE for new apps and says to disable unused implicit grant in the App Console.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/oauth", "title": "OAuth guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-authorize-url",
+      "statement": "The authorization endpoint is https://www.dropbox.com/oauth2/authorize (GET), with required client_id and response_type.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-token-url",
+      "statement": "The token endpoint is https://api.dropboxapi.com/oauth2/token (POST); the same page's examples use api.dropbox.com, and token error responses aren't documented there.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-client-auth",
+      "statement": "The token endpoint accepts client_id and client_secret as POST parameters or via HTTP Basic auth (app key as username, secret as password).",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-pkce",
+      "statement": "PKCE is supported (S256 recommended, plain allowed; verifier 43–128 characters) for apps that can't keep the secret. The reference's PKCE examples send client_id with code_verifier and omit client_secret, while the OAuth guide's wording says code_verifier replaces client_id.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/oauth", "title": "OAuth guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23", "quote": "pass the code_verifier with your generated value instead of the client_id" }
+      ]
+    },
+    {
+      "id": "c-offline",
+      "statement": "token_access_type defaults to online (short-lived access token only); offline also returns a refresh_token.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/oauth", "title": "OAuth guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-expires",
+      "statement": "Access tokens are short-lived; the token response's expires_in gives the lifetime, shown as 14400 seconds in Dropbox's example. A 401 indicates an expired token.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/oauth", "title": "OAuth guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-refresh-no-expiry",
+      "statement": "Refresh tokens don't expire automatically and stay valid until revoked, unless refresh_token_expiration_seconds is set at code exchange; a refresh request returns a new access token but no new refresh token.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-scope-param",
+      "statement": "The authorize URL's scope parameter takes a space-separated subset of the console-enabled scopes; if omitted, all enabled scopes are requested.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-state",
+      "statement": "The state parameter (up to 2000 bytes) is returned to the redirect URI and should be used for CSRF protection.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/authorization", "title": "Authorization reference", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-console-max",
+      "statement": "Scopes enabled on the Permissions tab are the maximum and default an app can request, and account_info.read must be enabled for user-linked apps.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://dropbox.tech/developers/customizing-scopes-in-oauth-flow", "title": "Dropbox Tech blog: Customizing scopes in OAuth flow (2024-09-13)", "kind": "official", "read": "full", "retrievedAt": "2026-10-23", "quote": "define the maximum, as well as the default" }
+      ]
+    },
+    {
+      "id": "c-scope-change",
+      "statement": "Changing scopes in the console doesn't alter users' existing grants; newly enabled scopes are only granted when the user authorizes again (include_granted_scopes=user requests just the new ones).",
+      "label": "verified",
+      "sources": [
+        { "url": "https://dropbox.tech/developers/customizing-scopes-in-oauth-flow", "title": "Dropbox Tech blog: Customizing scopes in OAuth flow (2024-09-13)", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-scopes-endpoints",
+      "statement": "Required scopes: files/list_folder needs files.metadata.read; files/download needs files.content.read; files/upload and files/delete_v2 need files.content.write; users/get_current_account needs account_info.read. Upload and download use content.dropboxapi.com.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/api-reference/user-endpoints/files/list-folder.md", "title": "files/list_folder", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://docs.dropboxapi.com/dropbox-api/api-reference/user-endpoints/files/download.md", "title": "files/download", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://docs.dropboxapi.com/dropbox-api/api-reference/user-endpoints/files/upload.md", "title": "files/upload", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://docs.dropboxapi.com/dropbox-api/api-reference/user-endpoints/files/delete-v-2.md", "title": "files/delete_v2", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://docs.dropboxapi.com/dropbox-api/api-reference/user-endpoints/users/get-current-account.md", "title": "users/get_current_account", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-upload-limit",
+      "statement": "files/upload accepts files up to 150 MiB; larger files need an upload session.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/api-reference/user-endpoints/files/upload.md", "title": "files/upload", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-get-account",
+      "statement": "users/get_current_account is a POST to https://api.dropboxapi.com/2/users/get_current_account with a bearer token and no body; it returns account_id, and Dropbox advises using account_id rather than email as the stable identifier.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/api-reference/user-endpoints/users/get-current-account.md", "title": "users/get_current_account", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-empty-body",
+      "statement": "Sending a JSON Content-Type with an empty body to get_current_account has been reported to return 400; sending only the Authorization header works.",
+      "label": "uncertain",
+      "sources": [
+        { "url": "https://lists.runrev.com/pipermail/use-livecode/2017-October/242308.html", "title": "LiveCode mailing list thread (2017)", "kind": "community", "read": "snippet", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-console-token",
+      "statement": "Developers who used a console-generated token in production hit 401 expired_access_token after about four hours and had to switch to an offline refresh token.",
+      "label": "reported",
+      "sources": [
+        { "url": "https://github.com/spatie/flysystem-dropbox/issues/86", "title": "spatie/flysystem-dropbox issue #86 (2022–2025)", "kind": "community", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-dev-status",
+      "statement": "New apps start in development status and can initially link only the developer's own account; Enable additional users allows up to 500 linked Dropbox users in development.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "DBX Platform developer guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-50-window",
+      "statement": "Once an app links 50 users, the developer has two weeks to apply for and receive production approval; after that, the app's ability to link more users is frozen.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "DBX Platform developer guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" },
+        { "url": "https://www.dropbox.com/developers/support", "title": "Dropbox developer support", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-unfreeze",
+      "statement": "For a frozen app, receiving production status is the only way to unfreeze it; unlinking users doesn't help.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "DBX Platform developer guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23", "quote": "the only way to unfreeze your app" }
+      ]
+    },
+    {
+      "id": "c-review-trigger",
+      "statement": "Production requests can be submitted from the App Console at any time but aren't reviewed until the app has linked at least 50 users; a Request early review field accepts evidence for earlier review.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "DBX Platform developer guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-review-criteria",
+      "statement": "The production application asks how the app uses the API and requires an app icon; Dropbox checks compliance with the branding guidelines and terms and whether the app requests an unnecessarily broad permission, and rejects non-compliant apps.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "DBX Platform developer guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-review-time",
+      "statement": "Dropbox says it responds to nearly all production requests within a few business days.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://www.dropbox.com/developers/support", "title": "Dropbox developer support", "kind": "official", "read": "full", "retrievedAt": "2026-10-23", "quote": "within a few business days" }
+      ]
+    },
+    {
+      "id": "c-denied-resubmit",
+      "statement": "A production review results in approval or denial; if denied, the developer receives feedback and can resubmit.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/get-started/tutorial/app-console", "title": "Tutorial: Creating a Dropbox app and navigating the App Console", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-name-lock",
+      "statement": "The app name can't be changed after production status is granted.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "DBX Platform developer guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-branding-name",
+      "statement": "App names may not include \"Dropbox\" or Dropbox product names, begin with \"drop\", resemble Dropbox (e.g. DBX, DB), or imply affiliation.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/branding-guide", "title": "Developer branding guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-branding-logo",
+      "statement": "A logo is submitted with the production application; it must not resemble Dropbox logos or include the word Dropbox, and Dropbox may show it on its authorization page. No size or format is specified.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/branding-guide", "title": "Developer branding guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-privacy-policy",
+      "statement": "Apps need a clear, app-specific privacy policy.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "DBX Platform developer guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-dev-ok",
+      "statement": "Demos, hackathons, staging environments and internal tools can stay in development status; the Chooser, Saver and Embedder components need no permissions or production approval.",
+      "label": "verified",
+      "sources": [
+        { "url": "https://docs.dropboxapi.com/dropbox-api/docs/developer-resources/developer-guide", "title": "DBX Platform developer guide", "kind": "official", "read": "full", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-frozen-existing",
+      "statement": "A Dropbox forum moderator reportedly said a frozen app still works for accounts that were already connected; the freeze only blocks new accounts.",
+      "label": "uncertain",
+      "sources": [
+        { "url": "https://community.dropbox.com/discussions/101000014/ability-to-link-new-users-frozen-at-0-linked-users/492523", "title": "Dropbox Community thread (page not fetchable; seen in search snippet)", "kind": "community", "read": "unfetchable", "retrievedAt": "2026-10-23" }
+      ]
+    },
+    {
+      "id": "c-team-limit",
+      "statement": "A forum user reports that a team-linked app in development was capped at 5 linked teams, with no documented path to production for team apps.",
+      "label": "uncertain",
+      "sources": [
+        { "url": "https://community.dropbox.com/en/discussion/846671/does-a-dropbox-app-have-a-limit-on-development-users", "title": "Dropbox Community thread (page not fetchable; seen in search snippet)", "kind": "community", "read": "unfetchable", "retrievedAt": "2026-10-23" }
+      ]
+    }
+  ]
+}

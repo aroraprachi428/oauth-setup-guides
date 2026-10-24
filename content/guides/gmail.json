@@ -1,0 +1,1929 @@
+{
+  "slug": "gmail",
+  "app": {
+    "name": "Gmail (Google)",
+    "website": "https://mail.google.com",
+    "category": "Email",
+    "developerPortalUrl": "https://console.cloud.google.com/auth/overview",
+    "primaryDocsUrl": "https://developers.google.com/identity/protocols/oauth2/web-server"
+  },
+  "source": "curated",
+  "version": 1,
+  "lastVerified": "2026-10-23",
+  "oauthSupport": "public",
+  "technical": {
+    "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+    "tokenUrl": "https://oauth2.googleapis.com/token",
+    "oauthVersion": "2.0",
+    "pkce": "supported",
+    "clientSecretHandling": "Web application clients must send the client secret at the token endpoint. Google shows the secret only once at creation, so store it in a secret manager immediately. PKCE is documented for installed apps (S256 or plain).",
+    "refreshTokens": {
+      "supported": true,
+      "expiry": "7 days after consent while an External app is in Testing; otherwise until revoked, unused for six months, the user changes password (Gmail scopes), or a token limit is exceeded",
+      "notes": "Only returned with access_type=offline and only on the first code exchange; use prompt=consent to get a new one. Limit of 100 per Google Account per client ID; the oldest is silently invalidated."
+    },
+    "accessTokenLifetime": "Read expires_in from the token response (about 1 hour); no fixed lifetime",
+    "redirectUriRules": [
+      "Must exactly match an Authorized redirect URI, including scheme, case and trailing slash",
+      "HTTPS required except localhost",
+      "No raw IP hosts (except localhost IPs), wildcards, fragments, userinfo or path traversal",
+      "Hosts can't be under googleusercontent.com and TLDs must be on the public suffix list"
+    ],
+    "claimIds": [
+      "c-auth-endpoint",
+      "c-token-endpoint",
+      "c-secret-once",
+      "c-secret-required",
+      "c-pkce",
+      "c-offline",
+      "c-refresh-expiry",
+      "c-refresh-limit",
+      "c-testing-7day",
+      "c-expires-in",
+      "c-redirect-rules"
+    ]
+  },
+  "profiles": [
+    {
+      "id": "gmail-readonly-public",
+      "intent": "Read users' mail (gmail.readonly, restricted scope) for any Google user",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "https://www.googleapis.com/auth/gmail.readonly",
+          "purpose": "Read messages, threads and settings; also accepted by users.getProfile for the Stage 1 check. Classified Restricted.",
+          "claimIds": [
+            "c-readonly-restricted",
+            "c-getprofile"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-enable-gmail",
+            "c-branding-setup",
+            "c-create-client"
+          ]
+        },
+        "requiresAppReview": {
+          "value": true,
+          "claimIds": [
+            "c-readonly-restricted",
+            "c-submit-steps",
+            "c-justification"
+          ]
+        },
+        "requiresSecurityAssessment": {
+          "value": true,
+          "claimIds": [
+            "c-assessment-condition",
+            "c-casa",
+            "c-annual"
+          ]
+        },
+        "requiresBusinessVerification": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": true,
+          "claimIds": [
+            "c-brand-requirements"
+          ]
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": [
+            "c-submit-steps"
+          ]
+        },
+        "paidAccessRequired": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "legalEntityRequired": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "marketplaceListingOptional": {
+          "value": "not_mentioned",
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "Testing status: only listed test users (up to 100) can authorize, they see an unverified-app warning, and refresh tokens expire 7 days after consent.",
+          "claimIds": [
+            "c-audience",
+            "c-testing-7day",
+            "c-unverified-screen",
+            "c-exemptions"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "Add access_type=offline (and prompt=consent if you've authorized before) or you get no refresh token.",
+            "stepId": "authorize",
+            "claimIds": [
+              "c-offline"
+            ]
+          },
+          {
+            "text": "Copy the client secret at creation; it can't be viewed again.",
+            "stepId": "create-client",
+            "claimIds": [
+              "c-secret-once"
+            ]
+          },
+          {
+            "text": "Refresh tokens issued in Testing die after 7 days; this is expected, not a bug.",
+            "stepId": "add-test-users",
+            "claimIds": [
+              "c-testing-7day"
+            ]
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Self-serve: create a project, enable the Gmail API, configure branding in Testing with yourself as a test user, create a Web client and complete one code flow. Restricted scopes work in Testing without verification.",
+          "time": {
+            "range": null,
+            "basis": "unknown",
+            "claimIds": []
+          },
+          "claimIds": [
+            "c-enable-gmail",
+            "c-branding-setup",
+            "c-create-client",
+            "c-exemptions"
+          ]
+        },
+        "stage2": {
+          "band": "Weeks or more",
+          "summary": "Going public with gmail.readonly needs brand verification, restricted scope review, and an annual CASA security assessment from a third-party lab that you pay. Until then you're capped at 100 users for the project's lifetime.",
+          "time": {
+            "range": "Several weeks; the security assessment alone takes 2-8 weeks",
+            "basis": "official",
+            "startsWhen": "after you submit the data access request in the Verification Center; the assessment starts only when Google Trust and Safety contacts you",
+            "claimIds": [
+              "c-restricted-weeks",
+              "c-turnaround-official",
+              "c-cost-quotes",
+              "c-casa"
+            ]
+          },
+          "claimIds": [
+            "c-readonly-restricted",
+            "c-casa",
+            "c-fee-official",
+            "c-lifetime-cap",
+            "c-annual",
+            "c-restricted-weeks"
+          ]
+        }
+      },
+      "blockerTags": [
+        "user_cap",
+        "review",
+        "security_assessment",
+        "cost",
+        "admin_consent_or_per_tenant"
+      ],
+      "stage1DoneWhen": {
+        "text": "GET https://gmail.googleapis.com/gmail/v1/users/me/profile with your access token returns 200 with your emailAddress and messagesTotal, and your token response included a refresh_token.",
+        "claimIds": [
+          "c-getprofile",
+          "c-offline"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "provider",
+          "how": "Google reviews the use case and scope justification and can reject it, assigns the CASA level, and caps unverified apps at 100 users for the project's lifetime.",
+          "claimIds": [
+            "c-use-case",
+            "c-justification",
+            "c-casa-levels",
+            "c-lifetime-cap"
+          ]
+        },
+        {
+          "party": "tenant_admin",
+          "how": "Workspace admins can block your app, limit it to unrestricted services, or restrict Gmail so only trusted apps can reach it, which revokes existing tokens.",
+          "claimIds": [
+            "c-ws-controls",
+            "c-ws-unconfigured",
+            "c-refresh-expiry"
+          ]
+        },
+        {
+          "party": "you",
+          "how": "You must own and verify the domain, publish a compliant privacy policy, record the demo video, follow Limited Use, and pay a CASA lab every year.",
+          "claimIds": [
+            "c-brand-requirements",
+            "c-demo-video",
+            "c-limited-use",
+            "c-fee-official",
+            "c-annual"
+          ]
+        }
+      ],
+      "stepIds": [
+        "create-project-enable-api",
+        "configure-branding",
+        "add-test-users",
+        "add-scope",
+        "create-client",
+        "authorize",
+        "exchange-code",
+        "check-token",
+        "prepare-brand",
+        "verify-branding",
+        "publish-app",
+        "submit-data-access",
+        "security-assessment",
+        "annual-recert"
+      ],
+      "requirementIds": [
+        "owned-domain",
+        "homepage",
+        "privacy-policy",
+        "demo-video",
+        "scope-justification",
+        "limited-use",
+        "casa-lov",
+        "security-docs"
+      ],
+      "limitIds": [
+        "test-users",
+        "testing-refresh",
+        "unverified-cap",
+        "refresh-per-client",
+        "refresh-idle",
+        "annual-assessment"
+      ],
+      "blockerIds": [
+        "redirect-mismatch",
+        "no-refresh-token",
+        "seven-day-expiry",
+        "not-test-user",
+        "admin-blocked",
+        "password-change",
+        "cap-hit",
+        "secret-lost"
+      ],
+      "bottomLine": "A first token takes one sitting in Testing mode. Going public with gmail.readonly means restricted scope review plus a third-party CASA assessment you pay for every year, and several weeks of lead time.",
+      "topRisks": [
+        "Unverified apps can only ever onboard 100 users, and that cap can't be reset",
+        "The annual CASA assessment is a recurring cost, about $540 to $40k",
+        "Workspace admins can block the app or restrict Gmail for their whole organization"
+      ]
+    }
+  ],
+  "defaultProfileId": "gmail-readonly-public",
+  "steps": [
+    {
+      "id": "create-project-enable-api",
+      "stage": 1,
+      "title": "Create a Cloud project and enable the Gmail API",
+      "owner": "developer",
+      "instructions": [
+        "Sign in to the Google Cloud console and create (or pick) a project for this app.",
+        "Go to APIs & Services > Library > Google Workspace, click Gmail API, then Enable. Or run gcloud services enable gmail.googleapis.com."
+      ],
+      "links": [
+        {
+          "label": "Enable Google Workspace APIs",
+          "url": "https://developers.google.com/workspace/guides/enable-apis"
+        },
+        {
+          "label": "Google Cloud console",
+          "url": "https://console.cloud.google.com/"
+        }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-enable-gmail"
+      ]
+    },
+    {
+      "id": "configure-branding",
+      "stage": 1,
+      "title": "Set up Google Auth platform branding",
+      "owner": "developer",
+      "instructions": [
+        "Open Menu > Google Auth platform > Branding. If you see Get Started, click it.",
+        "Enter the App name and User support email, click Next.",
+        "Under Audience choose External (any Google user), click Next.",
+        "Under Contact Information enter an email for project notices, click Next.",
+        "Check I agree to the Google API Services: User Data Policy, click Continue, then Create."
+      ],
+      "links": [
+        {
+          "label": "Configure the OAuth consent screen",
+          "url": "https://developers.google.com/workspace/guides/configure-oauth-consent"
+        }
+      ],
+      "humanGate": "legal_attestation",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-branding-setup",
+        "c-label-mix",
+        "c-audience"
+      ]
+    },
+    {
+      "id": "add-test-users",
+      "stage": 1,
+      "title": "Add yourself as a test user",
+      "owner": "developer",
+      "instructions": [
+        "Go to Audience. Leave Publishing status as Testing.",
+        "Under Test users click Add users, enter your Google account email, then Save.",
+        "Only listed test users (up to 100) can authorize while in Testing, and their refresh tokens expire after 7 days."
+      ],
+      "links": [
+        {
+          "label": "Manage app audience",
+          "url": "https://support.google.com/cloud/answer/15549945"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-test-users-ui",
+        "c-audience",
+        "c-testing-7day"
+      ]
+    },
+    {
+      "id": "add-scope",
+      "stage": 1,
+      "title": "Declare gmail.readonly under Data Access",
+      "owner": "developer",
+      "instructions": [
+        "Go to Data Access and click Add or Remove Scopes.",
+        "Add https://www.googleapis.com/auth/gmail.readonly and click Save. It will be listed as a restricted scope.",
+        "Don't add scopes you won't use now; every scope must be justified at verification."
+      ],
+      "links": [
+        {
+          "label": "Choose Gmail API scopes",
+          "url": "https://developers.google.com/workspace/gmail/api/auth/scopes"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-data-access-ui",
+        "c-readonly-restricted",
+        "c-justification"
+      ]
+    },
+    {
+      "id": "create-client",
+      "stage": 1,
+      "title": "Create a Web application OAuth client",
+      "owner": "developer",
+      "instructions": [
+        "Go to Google Auth platform > Clients and click Create Client.",
+        "Set Application type to Web application and enter a Name (only shown in the console).",
+        "Under Authorized redirect URIs add your callback exactly as your app sends it: HTTPS (http only for localhost), no wildcards, fragments or raw IPs; trailing slash and case must match.",
+        "Leave Use this client for an AI-powered agent unchecked unless it applies; it can't be changed later.",
+        "Click Create and copy the client ID and client secret now. The secret is shown only once; keep it in a secret manager, never in source control."
+      ],
+      "links": [
+        {
+          "label": "Create access credentials",
+          "url": "https://developers.google.com/workspace/guides/create-credentials"
+        },
+        {
+          "label": "Redirect URI validation rules",
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-create-client",
+        "c-redirect-rules",
+        "c-secret-once",
+        "c-secret-required"
+      ]
+    },
+    {
+      "id": "authorize",
+      "stage": 1,
+      "title": "Send yourself through the consent flow",
+      "owner": "developer",
+      "instructions": [
+        "Open https://accounts.google.com/o/oauth2/v2/auth?client_id=CLIENT_ID&redirect_uri=YOUR_URI&response_type=code&scope=https://www.googleapis.com/auth/gmail.readonly&access_type=offline&prompt=consent&state=RANDOM (URL-encode values).",
+        "access_type=offline is needed for a refresh token; prompt=consent makes Google prompt again so a new code can return one if you've authorized before.",
+        "Optionally add PKCE (code_challenge with code_challenge_method=S256). Web clients still send the client secret.",
+        "Sign in as your test user. Expect an unverified-app warning; continue past it. Check that state on the redirect matches."
+      ],
+      "links": [
+        {
+          "label": "OAuth 2.0 for Web Server Applications",
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server"
+        }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-auth-endpoint",
+        "c-offline",
+        "c-state",
+        "c-pkce",
+        "c-pkce-web",
+        "c-unverified-screen"
+      ]
+    },
+    {
+      "id": "exchange-code",
+      "stage": 1,
+      "title": "Exchange the code for tokens",
+      "owner": "agent",
+      "instructions": [
+        "POST to https://oauth2.googleapis.com/token with client_id, client_secret, code, the same redirect_uri and grant_type=authorization_code (plus code_verifier if you used PKCE).",
+        "Store access_token, expires_in and refresh_token server-side. Refresh with grant_type=refresh_token before expires_in runs out.",
+        "In Testing, the refresh token dies 7 days after consent; plan to re-consent during development."
+      ],
+      "links": [
+        {
+          "label": "Token exchange",
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-token-endpoint",
+        "c-expires-in",
+        "c-offline",
+        "c-testing-7day"
+      ]
+    },
+    {
+      "id": "check-token",
+      "stage": 1,
+      "title": "Check the token reads the mailbox",
+      "owner": "agent",
+      "instructions": [
+        "GET https://gmail.googleapis.com/gmail/v1/users/me/profile with Authorization: Bearer ACCESS_TOKEN.",
+        "Expect 200 with emailAddress, messagesTotal, threadsTotal and historyId."
+      ],
+      "links": [
+        {
+          "label": "users.getProfile",
+          "url": "https://developers.google.com/workspace/gmail/api/reference/rest/v1/users/getProfile"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-getprofile"
+      ]
+    },
+    {
+      "id": "prepare-brand",
+      "stage": 2,
+      "title": "Prepare homepage, privacy policy and domain verification",
+      "owner": "developer",
+      "instructions": [
+        "Host a public homepage on a domain you own that describes the app (not just a login page).",
+        "Publish a privacy policy on the same domain, linked from the homepage, disclosing how you access, use, store and share Gmail data and that you follow Limited Use.",
+        "Verify each authorized domain in Google Search Console as a project owner or editor.",
+        "Add the homepage, privacy policy and authorized domains on the Branding page."
+      ],
+      "links": [
+        {
+          "label": "Restricted scope verification requirements",
+          "url": "https://support.google.com/cloud/answer/13464321"
+        },
+        {
+          "label": "API Services User Data Policy",
+          "url": "https://developers.google.com/terms/api-services-user-data-policy"
+        }
+      ],
+      "humanGate": "identity_check",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-brand-requirements",
+        "c-privacy-disclosure",
+        "c-limited-use"
+      ]
+    },
+    {
+      "id": "verify-branding",
+      "stage": 2,
+      "title": "Verify and publish branding",
+      "owner": "developer",
+      "instructions": [
+        "On the Branding page click Verify Branding. Automated checks usually finish in minutes; manual review usually takes 2-3 business days.",
+        "If it shows Need to fix issues, click View issues, fix, and re-verify (or request additional review).",
+        "Click Publish branding within 7 days of a compliant result, or it reverts to Need to re-verify."
+      ],
+      "links": [
+        {
+          "label": "Manage OAuth app branding",
+          "url": "https://support.google.com/cloud/answer/15549049"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-brand-ui",
+        "c-brand-time"
+      ]
+    },
+    {
+      "id": "publish-app",
+      "stage": 2,
+      "title": "Move the app to In production",
+      "owner": "developer",
+      "instructions": [
+        "On Audience, click Publish app to switch Publishing status from Testing to In production.",
+        "Until restricted scope verification completes, users see the unverified-app screen and only 100 new users can ever authorize."
+      ],
+      "links": [
+        {
+          "label": "Manage app audience",
+          "url": "https://support.google.com/cloud/answer/15549945"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": true,
+      "claimIds": [
+        "c-audience",
+        "c-lifetime-cap",
+        "c-unverified-screen"
+      ]
+    },
+    {
+      "id": "submit-data-access",
+      "stage": 2,
+      "title": "Submit the data access (restricted scope) request",
+      "owner": "developer",
+      "instructions": [
+        "In the Verification Center, open data access status and start the request (needs published branding).",
+        "Declare every scope, select your application type, and explain why gmail.metadata or other narrower scopes won't work. Don't request scopes for unbuilt features.",
+        "Upload an unlisted YouTube demo video in English showing the app name, client ID in the address bar, the full consent screen with gmail.readonly, and the feature that uses it.",
+        "Answer follow-up emails from the review team promptly."
+      ],
+      "links": [
+        {
+          "label": "Restricted scope verification",
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification"
+        }
+      ],
+      "humanGate": "review_submission",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-submit-steps",
+        "c-demo-video",
+        "c-justification",
+        "c-use-case"
+      ]
+    },
+    {
+      "id": "security-assessment",
+      "stage": 2,
+      "title": "Pass the CASA security assessment",
+      "owner": "developer",
+      "instructions": [
+        "Wait for Google Trust and Safety to tell you to start; it's the last step, and Google sets your assurance level (AL1 or AL2).",
+        "Engage a CASA authorized lab (e.g. Bishop Fox, DEKRA, NetSentries, TAC Security) and pay its fee, about $540 to $40k.",
+        "Fix findings, get the Letter of Validation, and submit it to Google Trust and Safety.",
+        "Existing SOC 2, ISO/IEC 27001 or HITRUST reports can shorten the work."
+      ],
+      "links": [
+        {
+          "label": "Security assessment",
+          "url": "https://support.google.com/cloud/answer/13465431"
+        },
+        {
+          "label": "CASA (App Defense Alliance)",
+          "url": "https://appdefensealliance.dev/casa"
+        }
+      ],
+      "humanGate": "payment",
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-casa",
+        "c-casa-levels",
+        "c-labs",
+        "c-fee-official",
+        "c-cost-quotes",
+        "c-cost-tac",
+        "c-cert-reduce"
+      ]
+    },
+    {
+      "id": "annual-recert",
+      "stage": 2,
+      "title": "Recertify every 12 months",
+      "owner": "provider",
+      "instructions": [
+        "Google emails when recertification is due, 12 months from your last Letter of Validation's effective date.",
+        "The reassessment is a full test regardless of changes, and you pay the lab again. Keep Owner and Editor contacts current."
+      ],
+      "links": [
+        {
+          "label": "Annual recertification",
+          "url": "https://support.google.com/cloud/answer/13463816"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-annual",
+        "c-fee-official"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "owned-domain",
+      "label": "Verified domain",
+      "detail": "Every authorized domain must be verified in Google Search Console by a project owner or editor.",
+      "howToPrepare": "Add a DNS TXT record or other Search Console method for your app's domain.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-brand-requirements"
+      ]
+    },
+    {
+      "id": "homepage",
+      "label": "Public homepage",
+      "detail": "On a domain you own, describing the app; it can't be only a login page.",
+      "howToPrepare": "Publish a short product page and link the privacy policy from it.",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-brand-requirements"
+      ]
+    },
+    {
+      "id": "privacy-policy",
+      "label": "Privacy policy",
+      "detail": "On the homepage's domain, same URL on the consent screen, disclosing how you access, use, store and share Google user data.",
+      "howToPrepare": "Write a Gmail-specific section covering storage, deletion on request and Limited Use.",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-brand-requirements",
+        "c-privacy-disclosure"
+      ]
+    },
+    {
+      "id": "demo-video",
+      "label": "Demo video",
+      "detail": "Unlisted YouTube video in English showing the OAuth flow, app name, client ID in the address bar, full consent screen and how gmail.readonly is used.",
+      "howToPrepare": "Record against the production client with the final branding.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-demo-video",
+        "c-submit-steps"
+      ]
+    },
+    {
+      "id": "scope-justification",
+      "label": "Scope justification",
+      "detail": "Why gmail.readonly is needed and why narrower scopes (e.g. gmail.metadata) wouldn't work, for features that already exist.",
+      "howToPrepare": "Map each user-facing feature to the data it reads.",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-justification",
+        "c-use-case"
+      ]
+    },
+    {
+      "id": "limited-use",
+      "label": "Limited Use compliance",
+      "detail": "Data used only for user-facing features; no ads, sale, or human reading outside the narrow exceptions.",
+      "howToPrepare": "Review data flows, access controls and any AI training use before submitting.",
+      "agentCanDraft": true,
+      "claimIds": [
+        "c-limited-use"
+      ]
+    },
+    {
+      "id": "casa-lov",
+      "label": "CASA Letter of Validation",
+      "detail": "Issued by an authorized lab after the assessment; renewed every 12 months.",
+      "howToPrepare": "Get quotes from authorized labs early and budget for annual renewal.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-casa",
+        "c-labs",
+        "c-annual"
+      ]
+    },
+    {
+      "id": "security-docs",
+      "label": "Existing security certifications (optional)",
+      "detail": "SOC 2, ISO/IEC 27001 or HITRUST can be reused through the CASA Accelerator.",
+      "howToPrepare": "Hand current reports to your assessor.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-cert-reduce"
+      ]
+    }
+  ],
+  "limits": [
+    {
+      "id": "test-users",
+      "what": "Test users in Testing status",
+      "value": "Up to 100 listed test users",
+      "whenHit": "Other accounts can't authorize until the app is In production.",
+      "claimIds": [
+        "c-audience"
+      ]
+    },
+    {
+      "id": "testing-refresh",
+      "what": "Refresh token lifetime in Testing",
+      "value": "7 days after consent",
+      "whenHit": "Refresh fails and the user must consent again.",
+      "claimIds": [
+        "c-testing-7day"
+      ]
+    },
+    {
+      "id": "unverified-cap",
+      "what": "New users for an unverified app with restricted scopes",
+      "value": "100 over the project's lifetime; can't be reset",
+      "whenHit": "New users can't authorize until verification completes.",
+      "claimIds": [
+        "c-lifetime-cap"
+      ]
+    },
+    {
+      "id": "refresh-per-client",
+      "what": "Refresh tokens per Google Account per client ID",
+      "value": "100",
+      "whenHit": "The oldest token is silently invalidated.",
+      "claimIds": [
+        "c-refresh-limit"
+      ]
+    },
+    {
+      "id": "refresh-idle",
+      "what": "Unused refresh token",
+      "value": "Six months",
+      "whenHit": "The token stops working; the user must re-consent.",
+      "claimIds": [
+        "c-refresh-expiry"
+      ]
+    },
+    {
+      "id": "annual-assessment",
+      "what": "Security assessment validity",
+      "value": "12 months from the Letter of Validation's effective date",
+      "whenHit": "Restricted scope access depends on recertifying; what happens if it lapses wasn't found.",
+      "claimIds": [
+        "c-annual"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "id": "redirect-mismatch",
+      "symptom": "Google shows a redirect URI error on the authorize page",
+      "cause": "redirect_uri doesn't exactly match an Authorized redirect URI (scheme, case, trailing slash)",
+      "fix": "Add the exact URI on the client in Google Auth platform > Clients",
+      "stepId": "create-client",
+      "claimIds": [
+        "c-redirect-rules"
+      ]
+    },
+    {
+      "id": "no-refresh-token",
+      "symptom": "Token response has no refresh_token",
+      "cause": "access_type=offline missing, or the user already authorized and no new consent was shown",
+      "fix": "Add access_type=offline and prompt=consent and repeat the flow",
+      "stepId": "authorize",
+      "claimIds": [
+        "c-offline"
+      ]
+    },
+    {
+      "id": "seven-day-expiry",
+      "symptom": "Refresh fails a week after connecting",
+      "cause": "App is in Testing status",
+      "fix": "Re-consent during development; publish and verify for production",
+      "stepId": "add-test-users",
+      "claimIds": [
+        "c-testing-7day"
+      ]
+    },
+    {
+      "id": "not-test-user",
+      "symptom": "A colleague can't authorize the app in Testing",
+      "cause": "Only listed test users can authorize",
+      "fix": "Add them under Audience > Test users",
+      "stepId": "configure-branding",
+      "claimIds": [
+        "c-audience",
+        "c-test-users-ui"
+      ]
+    },
+    {
+      "id": "admin-blocked",
+      "symptom": "admin_policy_enforced or a blocked-app message for a Workspace user",
+      "cause": "The org's API controls block the app or restrict Gmail",
+      "fix": "Ask the org's admin to mark the app Trusted (or Specific Google data) under API controls",
+      "claimIds": [
+        "c-refresh-expiry",
+        "c-ws-controls",
+        "c-ws-unconfigured"
+      ]
+    },
+    {
+      "id": "password-change",
+      "symptom": "A user's refresh token suddenly stops working",
+      "cause": "The user changed their password, which revokes tokens with Gmail scopes",
+      "fix": "Detect the refresh failure and send the user back through consent",
+      "claimIds": [
+        "c-refresh-expiry"
+      ]
+    },
+    {
+      "id": "cap-hit",
+      "symptom": "New users blocked after about 100 sign-ups",
+      "cause": "Unverified app hit the lifetime 100-user cap",
+      "fix": "Complete restricted scope verification; the cap can't be reset",
+      "stepId": "publish-app",
+      "claimIds": [
+        "c-lifetime-cap"
+      ]
+    },
+    {
+      "id": "secret-lost",
+      "symptom": "No client secret to configure",
+      "cause": "The secret is shown only once at creation",
+      "fix": "Create a new secret or client and store it immediately",
+      "stepId": "create-client",
+      "claimIds": [
+        "c-secret-once"
+      ]
+    }
+  ],
+  "nuances": [
+    {
+      "id": "console-rename",
+      "text": "The console menu is now Google Auth platform (Branding, Audience, Data Access, Clients, Verification Center). \"OAuth consent screen\" in older text means these pages.",
+      "stepId": "configure-branding",
+      "claimIds": [
+        "c-label-mix",
+        "c-brand-ui"
+      ]
+    },
+    {
+      "id": "no-unrestricted-read",
+      "text": "Every Gmail scope that reads mail content or headers outside add-ons is restricted, including gmail.metadata, so there's no lighter-review path for reading mail.",
+      "stepId": "add-scope",
+      "claimIds": [
+        "c-readonly-restricted"
+      ]
+    },
+    {
+      "id": "assessment-trigger",
+      "text": "The security assessment is tied to storing or transmitting restricted data on servers. A server-side integration does both, so plan on it.",
+      "claimIds": [
+        "c-assessment-condition"
+      ]
+    },
+    {
+      "id": "first-exchange-only",
+      "text": "Google returns a refresh token only on the first code exchange. If you lose it, the user must consent again; prompt=consent forces a new consent screen.",
+      "stepId": "authorize",
+      "claimIds": [
+        "c-offline",
+        "c-token-endpoint"
+      ]
+    },
+    {
+      "id": "token-limit",
+      "text": "The 100 refresh tokens per account per client limit silently invalidates the oldest, so don't mint a fresh token per session or per worker.",
+      "claimIds": [
+        "c-refresh-limit"
+      ]
+    },
+    {
+      "id": "pkce-docs",
+      "text": "PKCE is optional for web clients; they still need the client secret.",
+      "stepId": "create-client",
+      "claimIds": [
+        "c-pkce",
+        "c-pkce-web",
+        "c-secret-required"
+      ]
+    },
+    {
+      "id": "letter-naming",
+      "text": "The assessment result is called a Letter of Validation or Letter of Assessment; tiers appear as AL1/AL2 or tier-2/tier-3. Same thing.",
+      "stepId": "security-assessment",
+      "claimIds": [
+        "c-casa",
+        "c-udp-assessment",
+        "c-casa-levels",
+        "c-turnaround-official"
+      ]
+    },
+    {
+      "id": "cost-conflict",
+      "text": "Assessment cost varies by lab: about $540/year at the low end, $8k-$40k from other labs.",
+      "stepId": "security-assessment",
+      "claimIds": [
+        "c-fee-official",
+        "c-cost-tac",
+        "c-cost-quotes",
+        "c-cost-2019",
+        "c-cost-2026"
+      ]
+    },
+    {
+      "id": "self-scan-gone",
+      "text": "Tier 2 self-scanning ended in May 2024; expect to hire a lab.",
+      "claimIds": [
+        "c-selfscan-ended"
+      ]
+    },
+    {
+      "id": "exemptions",
+      "text": "No verification is needed for internal apps (Internal user type), personal use by a few people you know, or testing. Domain-wide installation skips brand verification but not restricted scope verification.",
+      "claimIds": [
+        "c-exemptions"
+      ]
+    },
+    {
+      "id": "reverify",
+      "text": "Adding redirect URIs, renaming the app, or changing scopes after verification can trigger re-verification; a new restricted scope can trigger reassessment.",
+      "claimIds": [
+        "c-reverify"
+      ]
+    },
+    {
+      "id": "agent-flag",
+      "text": "Clients have a one-way Use this client for an AI-powered agent setting at creation.",
+      "stepId": "create-client",
+      "claimIds": [
+        "c-create-client"
+      ]
+    }
+  ],
+  "notFound": [
+    {
+      "item": "A cost figure on Gmail or OAuth verification pages",
+      "why": "No fee is stated for Gmail; only a figure for another Google API exists.",
+      "claimIds": [
+        "c-fee-official"
+      ]
+    },
+    {
+      "item": "Official SLA for restricted scope review",
+      "why": "Only \"several weeks\" is stated.",
+      "claimIds": [
+        "c-restricted-weeks",
+        "c-turnaround-official"
+      ]
+    },
+    {
+      "item": "What happens to connected users if annual recertification lapses",
+      "why": "The consequence isn't described.",
+      "claimIds": [
+        "c-annual"
+      ]
+    },
+    {
+      "item": "Whether existing users keep working during verification",
+      "why": "Not stated on the pages read.",
+      "claimIds": [
+        "c-exemptions"
+      ]
+    },
+    {
+      "item": "Exact criteria for AL1 vs AL2",
+      "why": "Only risk signals (user count, scopes) are named.",
+      "claimIds": [
+        "c-casa-levels"
+      ]
+    },
+    {
+      "item": "PKCE for Web application clients",
+      "why": "PKCE is documented only for installed apps.",
+      "claimIds": [
+        "c-pkce",
+        "c-pkce-web"
+      ]
+    },
+    {
+      "item": "Fixed access token lifetime",
+      "why": "Only a sample expires_in (3920 s) is shown.",
+      "claimIds": [
+        "c-expires-in"
+      ]
+    },
+    {
+      "item": "Business verification or legal entity requirement",
+      "why": "Not mentioned on the pages read; recorded as not_mentioned.",
+      "claimIds": []
+    },
+    {
+      "item": "Live console labels for project creation and Publish app",
+      "why": "Console wasn't opened (no sign-in). Publish app comes from help text.",
+      "claimIds": [
+        "c-audience"
+      ]
+    },
+    {
+      "item": "Exact redirect URI error name",
+      "why": "The web server guide lists validation rules but the error code wasn't confirmed.",
+      "claimIds": [
+        "c-redirect-rules"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "c-auth-endpoint",
+      "statement": "The authorization endpoint is https://accounts.google.com/o/oauth2/v2/auth (HTTPS only). Required parameters are client_id, redirect_uri, response_type=code and a space-delimited scope; access_type and state are recommended.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-token-endpoint",
+      "statement": "The code is exchanged by POST to https://oauth2.googleapis.com/token with client_id, client_secret, code, redirect_uri and grant_type=authorization_code. The response has access_token, expires_in, scope, token_type and, with offline access, refresh_token. Tokens are revoked at https://oauth2.googleapis.com/revoke.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-state",
+      "statement": "Google recommends the state parameter to mitigate cross-site request forgery and says to validate it on the response.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-offline",
+      "statement": "access_type=offline is needed to receive a refresh token, and a refresh token is returned only the first time a code is exchanged. prompt accepts none, consent or select_account; without prompt, users are only prompted the first time the project asks.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-incremental",
+      "statement": "include_granted_scopes=true makes the new token also cover scopes the user granted earlier (incremental authorization).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-redirect-rules",
+      "statement": "Redirect URIs must exactly match an authorized URI (scheme, case, trailing slash), use HTTPS except localhost, and can't be raw IPs (except localhost IPs), contain wildcards, fragments, userinfo or path traversal, or sit under googleusercontent.com.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-secret-once",
+      "statement": "The client secret is shown only once, when the client is created, and can't be viewed or downloaded again. Google says to keep client_secret.json out of your source tree.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-secret-required",
+      "statement": "Web server applications require a client secret; JavaScript apps don't.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2",
+          "title": "Using OAuth 2.0 to Access Google APIs",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-pkce",
+      "statement": "PKCE is documented for installed apps: code_verifier of 43-128 characters, code_challenge_method S256 (recommended) or plain, with plain the default if omitted. The web server guide doesn't mention PKCE.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/native-app",
+          "title": "OAuth 2.0 for iOS & Desktop Apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "Always use PKCE (Proof Key for Code Exchange) when requesting authorization codes."
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-pkce-web",
+      "statement": "Google's authorization server likely accepts code_challenge from Web application clients too, alongside the client secret, but no Google page read here says so.",
+      "label": "uncertain",
+      "sources": [],
+      "unsourced": true
+    },
+    {
+      "id": "c-expires-in",
+      "statement": "expires_in gives the access token's remaining lifetime in seconds; Google's sample shows 3920 and no fixed lifetime is stated.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-refresh-expiry",
+      "statement": "Refresh tokens are valid until revoked or expired. They stop working if the user revokes access, the token is unused for six months, the user changes password and the token has Gmail scopes, the account exceeds its live-token limit, time-based access ends, or an admin restricts the service (admin_policy_enforced).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2",
+          "title": "Using OAuth 2.0 to Access Google APIs",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "The refresh token has not been used for six months."
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-refresh-limit",
+      "statement": "There is a limit of 100 refresh tokens per Google Account per OAuth client ID; issuing another silently invalidates the oldest. A separate per-user limit across all clients also exists.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2",
+          "title": "Using OAuth 2.0 to Access Google APIs",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "limit of 100 refresh tokens per Google Account per OAuth 2.0 client ID"
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-testing-7day",
+      "statement": "An External app in Testing status gets refresh tokens that expire in 7 days, unless it only requests basic profile scopes (openid, email, profile).",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2",
+          "title": "Using OAuth 2.0 to Access Google APIs",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/15549945",
+          "title": "Google Cloud Help: Manage app audience",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-enable-gmail",
+      "statement": "You need a Google Cloud project first. Enable the API at APIs & Services > Library > Google Workspace > Gmail API > Enable, or run gcloud services enable gmail.googleapis.com.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/guides/enable-apis",
+          "title": "Google Workspace: Enable Google Workspace APIs",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-branding-setup",
+      "statement": "Google Auth platform > Branding > Get Started asks for App name and User support email, then Audience (user type), Contact Information, and agreement to the Google API Services: User Data Policy before Create.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/guides/configure-oauth-consent",
+          "title": "Google Workspace: Configure the OAuth consent screen",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-test-users-ui",
+      "statement": "Test users for External apps are added under Audience > Test users > Add users, then Save.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/guides/configure-oauth-consent",
+          "title": "Google Workspace: Configure the OAuth consent screen",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-data-access-ui",
+      "statement": "Scopes are declared under Data Access > Add or Remove Scopes, then Save.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/guides/configure-oauth-consent",
+          "title": "Google Workspace: Configure the OAuth consent screen",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-create-client",
+      "statement": "OAuth clients are created at Google Auth platform > Clients > Create Client: Application type Web application, a Name, Authorized redirect URIs for server-side apps, then Create. An optional Use this client for an AI-powered agent setting can't be changed later.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/guides/create-credentials",
+          "title": "Google Workspace: Create access credentials",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+          "title": "Using OAuth 2.0 for Web Server Applications",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-audience",
+      "statement": "User type External lets any Google Account authorize; Internal is limited to your Cloud organization. In Testing status up to 100 test users can authorize, and each test user uses quota once added; In production opens the app to any Google Account.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/15549945",
+          "title": "Google Cloud Help: Manage app audience",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-label-mix",
+      "statement": "Google's pages now use Google Auth platform menu labels (Branding, Audience, Data Access, Clients) while still calling the screen the OAuth consent screen in body text.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/guides/configure-oauth-consent",
+          "title": "Google Workspace: Configure the OAuth consent screen",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/15549945",
+          "title": "Google Cloud Help: Manage app audience",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-readonly-restricted",
+      "statement": "gmail.readonly (view messages and settings) is a Restricted scope. gmail.metadata, gmail.modify, gmail.compose and https://mail.google.com/ are also restricted; the only sensitive read scopes are add-on scopes.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/gmail/api/auth/scopes",
+          "title": "Choose Gmail API scopes",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-assessment-condition",
+      "statement": "Restricted scopes need restricted scope verification, and a security assessment is required if you store or transmit restricted scope data on servers.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/gmail/api/auth/scopes",
+          "title": "Choose Gmail API scopes",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-getprofile",
+      "statement": "GET https://gmail.googleapis.com/gmail/v1/users/me/profile returns emailAddress, messagesTotal, threadsTotal and historyId, and accepts gmail.readonly.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/workspace/gmail/api/reference/rest/v1/users/getProfile",
+          "title": "Gmail API: users.getProfile",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-unverified-screen",
+      "statement": "An unverified app screen appears before consent when an app requests sensitive or restricted scopes without completed verification.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/7454865",
+          "title": "Google Cloud Help: Unverified apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-lifetime-cap",
+      "statement": "Unverified apps requesting unapproved sensitive or restricted scopes are capped at 100 new users over the project's lifetime, and the cap can't be reset. Google says quotas may be adjusted for app history and risk.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/15549945",
+          "title": "Google Cloud Help: Manage app audience",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/7454865",
+          "title": "Google Cloud Help: Unverified apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-brand-requirements",
+      "statement": "Brand verification needs a homepage on a domain you own (not just a login page), a privacy policy on the same domain linked from the homepage and the consent screen, and each authorized domain verified in Google Search Console by a project owner or editor.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/13464321",
+          "title": "Google Cloud Help: Restricted scope verification requirements",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-brand-ui",
+      "statement": "Verify Branding on the Branding page usually finishes in minutes; then Publish branding. Compliant results are valid for 7 days, and published branding is required before you can request data access verification in the Verification Center.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/15549049",
+          "title": "Google Cloud Help: Manage OAuth app branding",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-brand-time",
+      "statement": "Brand verification usually takes 2-3 business days if branding changed; automated review often finishes in minutes.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-submit-steps",
+      "statement": "Data access verification is submitted from the Verification Center after branding is published: declare all scopes, link an unlisted YouTube demo video, choose your application type, and explain why narrower scopes won't work.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-demo-video",
+      "statement": "The demo video must show the full OAuth grant flow, the same app name and branding, the complete consent screen with the exact scopes, be in English, and show each restricted scope in use.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/13464321",
+          "title": "Google Cloud Help: Restricted scope verification requirements",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-justification",
+      "statement": "Apps must request the narrowest scopes and justify each; Google may require a narrower scope or reject an insufficient justification.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/13464321",
+          "title": "Google Cloud Help: Restricted scope verification requirements",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "If your justification is deemed insufficient, your app verification request may be rejected."
+        }
+      ]
+    },
+    {
+      "id": "c-use-case",
+      "statement": "Restricted scope access is only allowed for appropriate use cases, which Google judges by examining the app's functionality.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/13464321",
+          "title": "Google Cloud Help: Restricted scope verification requirements",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-limited-use",
+      "statement": "Limited Use: use Gmail data only to provide or improve user-facing features; no transfers except narrow cases; no ads, data brokering or lending use; humans may read data only with consent or for security, legal or aggregated operations.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/terms/api-services-user-data-policy",
+          "title": "Google API Services User Data Policy",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "Limit your use of data to providing or improving user-facing features."
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/13464321",
+          "title": "Google Cloud Help: Restricted scope verification requirements",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-privacy-disclosure",
+      "statement": "The privacy policy must disclose how the app accesses, uses, stores and shares Google user data, and in-product disclosures should be prominent and timely.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/terms/api-services-user-data-policy",
+          "title": "Google API Services User Data Policy",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/13464321",
+          "title": "Google Cloud Help: Restricted scope verification requirements",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-restricted-weeks",
+      "statement": "Google says restricted scope verification can take several weeks and to plan that into launches.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-casa",
+      "statement": "Restricted scope apps must pass an annual security assessment by a Google-empanelled assessor using the App Defense Alliance CASA framework, which yields a Letter of Validation. It's the last step of the review, and Google Trust and Safety contacts you when to start.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/13465431",
+          "title": "Google Cloud Help: Security assessment",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/13464321",
+          "title": "Google Cloud Help: Restricted scope verification requirements",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-casa-levels",
+      "statement": "CASA assigns AL1 or AL2 by risk (user count, scopes, other signals); both are tested by an authorized lab, and the framework user (Google), not the developer, picks the level.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/13465431",
+          "title": "Google Cloud Help: Security assessment",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://appdefensealliance.dev/casa/casa-tiering",
+          "title": "App Defense Alliance: CASA assurance levels",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-annual",
+      "statement": "The assessment is repeated every 12 months from the previous Letter of Validation's effective date, as a comprehensive test regardless of app changes. Google emails when it's due.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/13463816",
+          "title": "Google Cloud Help: Annual recertification",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-labs",
+      "statement": "CASA authorized labs listed by the App Defense Alliance include Bishop Fox, DEKRA, NetSentries and TAC Security; the page states no prices.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://www.appdefensealliance.org/certification/authorized-labs",
+          "title": "App Defense Alliance: Authorized labs (301 target of appdefensealliance.dev/casa/casa-assessors)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://appdefensealliance.dev/casa",
+          "title": "App Defense Alliance: CASA overview",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-fee-official",
+      "statement": "Google's Health API verification page says the assessment has fees payable to the third-party assessor of $500 to $4,500 USD, set by app complexity, and that apps using restricted scopes need it. Gmail and OAuth help pages read state no fee.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/health/app-verification",
+          "title": "Google Health API: App verification",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "involves fees payable to the third-party assessor"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/13465431",
+          "title": "Google Cloud Help: Security assessment",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-turnaround-official",
+      "statement": "The same Health API page says the assessment takes about 2-3 weeks for tier-2 apps and 4-6 weeks for tier-3 apps.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/health/app-verification",
+          "title": "Google Health API: App verification",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-cert-reduce",
+      "statement": "Existing HITRUST, SOC 2 or ISO/IEC 27001 certifications are accepted via an authorized CASA assessor, and the CASA Accelerator may lower costs.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/health/app-verification",
+          "title": "Google Health API: App verification",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-cost-tac",
+      "statement": "Developers report Tier 2 through TAC Security at $540 per year, described as a Google-negotiated rate; another reports dropping Drive apps because about $500 a year wasn't feasible.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://groups.google.com/g/google-apps-script-community/c/XgsHT2Fr7u8",
+          "title": "Google Apps Script Community group: CASA verification thread (2024-2025)",
+          "kind": "community",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "Tier 2 self-scanning is no longer an option"
+        }
+      ]
+    },
+    {
+      "id": "c-selfscan-ended",
+      "statement": "Google's OAuth team told developers in May 2024 that Tier 2 self-scanning was no longer an option for restricted scopes.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://groups.google.com/g/google-apps-script-community/c/XgsHT2Fr7u8",
+          "title": "Google Apps Script Community group: CASA verification thread (2024-2025)",
+          "kind": "community",
+          "read": "full",
+          "retrievedAt": "2026-10-23",
+          "quote": "Tier 2 self-scanning is no longer an option"
+        }
+      ]
+    },
+    {
+      "id": "c-cost-quotes",
+      "statement": "In June 2025, indie developers reported CASA quotes of $15k-$40k from larger labs and about $8k from a smaller firm, with 6-8 weeks once a lab was engaged.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://community.latenode.com/t/is-casa-tier-2-assessment-necessary-for-all-gmail-api-apps-options-for-indie-developers/22861",
+          "title": "Latenode Community thread on CASA Tier 2 for Gmail apps (June 2025)",
+          "kind": "community",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-cost-2019",
+      "statement": "A 2019-2020 vendor post reported assessment fees of $15,000-$75,000 or more, attributed to Google's original announcement.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://www.gmass.co/blog/google-oauth-verification-security-assessment/",
+          "title": "GMass blog on the Google OAuth security assessment (updated Feb 2020)",
+          "kind": "vendor",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-cost-2026",
+      "statement": "A 2026 vendor post says Tier 2 via TAC Security costs $540-$1,800 per year and calls $50k-$75k figures outdated.",
+      "label": "reported",
+      "sources": [
+        {
+          "url": "https://bright-softwares.com/blog/en/google-workspace/the-50000-gmail-add-on-myth-what-google-s-casa-certification-really-costs",
+          "title": "Bright Softwares blog: what CASA certification really costs (Apr 2026, updated Oct 2026)",
+          "kind": "vendor",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-udp-assessment",
+      "statement": "The User Data Policy says the assessment requirement depends on the API and number of grants or users, and calls the result a Letter of Assessment.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/terms/api-services-user-data-policy",
+          "title": "Google API Services User Data Policy",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-exemptions",
+      "statement": "Verification isn't needed for personal use (you or a few people you know; no number given), development/testing/staging, service-owned data only, or internal apps with Internal user type. Domain-wide installation skips brand verification but still needs restricted scope verification.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://support.google.com/cloud/answer/7454865",
+          "title": "Google Cloud Help: Unverified apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-reverify",
+      "statement": "Adding redirect URIs or JavaScript origins, changing the product name, or changing scopes after verification may require verifying again; adding a restricted scope may require reassessment.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://support.google.com/cloud/answer/7454865",
+          "title": "Google Cloud Help: Unverified apps",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        },
+        {
+          "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+          "title": "Restricted scope verification (OAuth production readiness)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-ws-controls",
+      "statement": "Workspace admins manage third-party access at Security > Access and data control > API controls: apps can be Trusted, Limited, Specific Google data or Blocked, and Gmail can be set Restricted so only trusted apps reach it.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://knowledge.workspace.google.com/admin/apps/control-which-apps-access-google-workspace-data",
+          "title": "Google Workspace Admin Help: Control which apps access Google Workspace data (301 target of support.google.com/a/answer/7281227)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    },
+    {
+      "id": "c-ws-unconfigured",
+      "statement": "For unconfigured third-party apps, admins can allow any app (default), allow only basic sign-in info, or block all until configured. Users can request access, and setting a service to Restricted revokes untrusted apps' tokens.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://knowledge.workspace.google.com/admin/apps/control-which-apps-access-google-workspace-data",
+          "title": "Google Workspace Admin Help: Control which apps access Google Workspace data (301 target of support.google.com/a/answer/7281227)",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-23"
+        }
+      ]
+    }
+  ]
+}
