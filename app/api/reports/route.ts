@@ -1,5 +1,5 @@
 import { after, NextResponse, type NextRequest } from "next/server";
-import { getGuide } from "@/lib/guides";
+import { getCuratedGuides, getGuide } from "@/lib/guides";
 import { poke } from "@/lib/jobs/kick";
 import { submitReport } from "@/lib/reports";
 import { getStore } from "@/lib/store";
@@ -23,7 +23,9 @@ export async function POST(req: NextRequest) {
     store,
     slug,
     appName: guide.app.name,
-    isCurated: guide.source === "curated",
+    // Guides in content/guides (curated, or generated and promoted) are fixed files: reports are
+    // recorded, but a re-check could never replace them.
+    isCurated: getCuratedGuides().some((g) => g.slug === slug),
     target,
     type: typeof body.type === "string" ? body.type : "",
     detail: typeof body.detail === "string" ? body.detail : null,

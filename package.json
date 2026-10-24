@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "validate": "tsx scripts/validate-guides.ts",
+    "promote": "node --env-file-if-exists=.env.local --import tsx scripts/promote-guide.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
