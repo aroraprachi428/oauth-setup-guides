@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { MyRequests } from "./MyRequests";
 
 type Item = { slug: string; name: string; card: ReactNode };
 
@@ -67,6 +68,7 @@ export function LibraryBrowser({ items }: { items: Item[] }) {
           <p className="muted">An AI agent researches the app's official docs and adds a guide to the gallery if it passes our checks.</p>
         </div>
       )}
+      {!q && <MyRequests />}
       {message && (
         <p role="alert" className="notice">
           {message}

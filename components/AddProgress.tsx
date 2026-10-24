@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { rememberRequest } from "./MyRequests";
 
 type JobView = {
   slug: string;
@@ -20,7 +21,7 @@ const NUDGE_EVERY_MS = 15_000;
 
 // A queued job with a future retry time is waiting on the model's quota, not on other jobs.
 function statusLine(job: JobView): string {
-  if (job.status !== "queued") return "Working. This usually takes a few minutes; you can leave this page and come back.";
+  if (job.status !== "queued") return "Working. This usually takes a few minutes. You can leave this page: it stays under “Your requests” in the gallery.";
   const retry = job.nextAttemptAt ? new Date(job.nextAttemptAt) : null;
   if (retry && retry.getTime() > Date.now()) {
     const at = retry.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" });
@@ -51,6 +52,7 @@ export function AddProgress({ jobId }: { jobId: string }) {
         if (!r.ok) throw new Error(r.status === 404 ? "This job doesn't exist." : "Couldn't load progress.");
         const j: JobView = await r.json();
         if (stop) return;
+        rememberRequest({ jobId, slug: j.slug, appName: j.appName });
         setJob(j);
         setError(null);
         if (j.status === "done" && j.result?.outcome === "published") {
