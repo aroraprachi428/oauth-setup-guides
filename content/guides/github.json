@@ -1,0 +1,1421 @@
+{
+  "slug": "github",
+  "app": {
+    "name": "GitHub",
+    "website": "https://github.com/",
+    "category": "Developer Tools",
+    "developerPortalUrl": "https://github.com/settings/apps",
+    "primaryDocsUrl": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps",
+    "logoUrl": "https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png"
+  },
+  "source": "generated",
+  "generator": {
+    "model": "gemini-3.5-flash-lite",
+    "jobId": "ba7e335a-5cd8-4c22-8828-335abd49e2fd",
+    "generatedAt": "2026-10-25"
+  },
+  "version": 1,
+  "lastVerified": "2026-10-25",
+  "oauthSupport": "public",
+  "technical": {
+    "authorizationUrl": "https://github.com/login/oauth/authorize",
+    "tokenUrl": "https://github.com/login/oauth/access_token",
+    "oauthVersion": "2.0",
+    "pkce": "supported",
+    "clientSecretHandling": "Store the client secret securely on your backend server. Public or native clients should use PKCE instead of sending the secret.",
+    "refreshTokens": {
+      "supported": true,
+      "expiry": "Refresh tokens expire after six months without use",
+      "notes": "Access tokens expire after eight hours when token expiration is enabled; offline_access scope requests expiring tokens and refresh tokens."
+    },
+    "redirectUriRules": [
+      "Must match one of the registered callback URLs in OAuth app settings",
+      "Wildcard matching supported if enabled in app settings",
+      "Loopback IP addresses (127.0.0.1) supported for native applications"
+    ],
+    "claimIds": [
+      "c-create-app"
+    ]
+  },
+  "profiles": [
+    {
+      "id": "github-oauth",
+      "intent": "Authenticate GitHub users and access repository resources via OAuth 2.0",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "repo",
+          "purpose": "Provides full control of private and public repositories.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        {
+          "name": "user",
+          "purpose": "Read and write access to profile data and follower information.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        {
+          "name": "offline_access",
+          "purpose": "Requests an expiring access token and a refresh token.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "requiresAppReview": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresSecurityAssessment": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresBusinessVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": []
+        },
+        "paidAccessRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "legalEntityRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "marketplaceListingOptional": {
+          "value": true,
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "No sandbox or test mode limitations; apps can be authorized immediately by any user with a verified email.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "Make sure your email address is verified, otherwise authorizing the app will fail.",
+            "claimIds": [
+              "c-create-app"
+            ],
+            "stepId": "authorize"
+          },
+          {
+            "text": "Expiring access tokens expire after eight hours and issue a refresh token valid for six months.",
+            "claimIds": [
+              "c-create-app"
+            ],
+            "stepId": "exchange-code"
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Register an OAuth app in Developer Settings and complete the authorization code grant flow.",
+          "time": {
+            "range": "Immediate",
+            "basis": "official",
+            "startsWhen": "immediately upon app registration",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "stage2": {
+          "band": "None documented",
+          "summary": "No formal app review or approval gate exists for standard GitHub OAuth apps; they are public and self-serve immediately.",
+          "time": {
+            "range": "None",
+            "basis": "official",
+            "startsWhen": "n/a",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      },
+      "blockerTags": [
+        "none"
+      ],
+      "stage1DoneWhen": {
+        "text": "GET https://api.github.com/user with Bearer ACCESS_TOKEN returns 200 OK with the authenticated user's profile details.",
+        "claimIds": [
+          "c-create-app"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "provider",
+          "how": "Flags or restricts accounts under review from authorizing third-party applications until reinstated.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "stepIds": [
+        "create-app",
+        "configure-redirect",
+        "copy-credentials",
+        "authorize",
+        "exchange-code",
+        "check-token"
+      ],
+      "requirementIds": [
+        "verified-email"
+      ],
+      "limitIds": [
+        "max-apps",
+        "token-rate-limit"
+      ],
+      "blockerIds": [
+        "account-flagged"
+      ],
+      "bottomLine": "GitHub OAuth app creation is instant and completely self-serve. Implementing the standard authorization code grant with optional PKCE gets you a token immediately.",
+      "topRisks": [
+        "Failing to verify your email address blocks app authorization entirely",
+        "Ignoring scope minimization can request excessive permissions (such as full repo access)"
+      ]
+    },
+    {
+      "id": "github-device-flow",
+      "intent": "Authenticate CLI tools or headless clients using the OAuth 2.0 Device Authorization Grant",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "repo",
+          "purpose": "Provides full control of private and public repositories.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        {
+          "name": "read:user",
+          "purpose": "Read user profile information.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "requiresAppReview": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresSecurityAssessment": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresBusinessVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": []
+        },
+        "paidAccessRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "legalEntityRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "marketplaceListingOptional": {
+          "value": true,
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "Device code flow has a rate limit of 50 submissions per hour per application.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "Make sure Enable Device Flow is checked in your OAuth app settings.",
+            "claimIds": [
+              "c-create-app"
+            ],
+            "stepId": "create-app"
+          },
+          {
+            "text": "Poll the token endpoint strictly adhering to the requested interval to avoid slow_down error responses.",
+            "claimIds": [
+              "c-create-app"
+            ],
+            "stepId": "device-poll"
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Enable device flow on your OAuth app and poll the GitHub device authorization endpoints.",
+          "time": {
+            "range": "Immediate",
+            "basis": "official",
+            "startsWhen": "immediately upon app registration",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "stage2": {
+          "band": "None documented",
+          "summary": "No formal app review or approval gate exists for standard GitHub OAuth apps using the device flow.",
+          "time": {
+            "range": "None",
+            "basis": "official",
+            "startsWhen": "n/a",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      },
+      "blockerTags": [
+        "none"
+      ],
+      "stage1DoneWhen": {
+        "text": "GET https://api.github.com/user with the device-flow access token returns 200 OK.",
+        "claimIds": [
+          "c-create-app"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "provider",
+          "how": "Flags or restricts accounts under review from authorizing third-party applications until reinstated.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "stepIds": [
+        "create-app",
+        "request-device-code",
+        "prompt-user-device",
+        "device-poll",
+        "check-token"
+      ],
+      "requirementIds": [
+        "verified-email"
+      ],
+      "limitIds": [
+        "max-apps",
+        "token-rate-limit"
+      ],
+      "blockerIds": [
+        "account-flagged"
+      ],
+      "bottomLine": "GitHub device flow enables command-line tools and headless clients to authenticate users via browser code verification without a client secret.",
+      "topRisks": [
+        "Forgetting to enable Device Flow in app settings results in device_flow_disabled errors",
+        "Polling faster than the required interval triggers slow_down errors"
+      ]
+    },
+    {
+      "id": "github-oauth-multitenant",
+      "intent": "Configure multi-tenant OAuth app support across multiple callback URLs and wildcard domains",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "user",
+          "purpose": "Access user identity.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "requiresAppReview": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresSecurityAssessment": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresBusinessVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": []
+        },
+        "paidAccessRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "legalEntityRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "marketplaceListingOptional": {
+          "value": true,
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "Up to 10 callback URLs supported per OAuth app registration.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "Enabling wildcard matching allows any subdomain or subdirectory of the callback URL to match; use with caution.",
+            "claimIds": [
+              "c-create-app"
+            ],
+            "stepId": "configure-redirect"
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Register multiple callback URIs or wildcard patterns in your OAuth app settings.",
+          "time": {
+            "range": "Immediate",
+            "basis": "official",
+            "startsWhen": "immediately",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "stage2": {
+          "band": "None documented",
+          "summary": "No special approval required for multi-tenant URL configurations.",
+          "time": {
+            "range": "None",
+            "basis": "official",
+            "startsWhen": "n/a",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      },
+      "blockerTags": [
+        "none"
+      ],
+      "stage1DoneWhen": {
+        "text": "GET https://api.github.com/user with multi-tenant authorized token returns 200 OK.",
+        "claimIds": [
+          "c-create-app"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "provider",
+          "how": "Flags or restricts accounts under review from authorizing third-party applications until reinstated.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "stepIds": [
+        "create-app",
+        "configure-redirect",
+        "authorize",
+        "exchange-code",
+        "check-token"
+      ],
+      "requirementIds": [
+        "verified-email"
+      ],
+      "limitIds": [
+        "max-apps"
+      ],
+      "blockerIds": [
+        "account-flagged"
+      ],
+      "bottomLine": "GitHub OAuth multi-tenant applications can register up to 10 redirect URIs and configure wildcard matching for flexible deployment environments.",
+      "topRisks": [
+        "Overly permissive wildcard redirect URIs risking code interception vulnerabilities"
+      ]
+    },
+    {
+      "id": "github-oauth-token-management",
+      "intent": "Manage OAuth token expiration, rotation, and revocation for enhanced security",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "offline_access",
+          "purpose": "Obtain refresh tokens upon authorization.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "requiresAppReview": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresSecurityAssessment": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresBusinessVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": []
+        },
+        "paidAccessRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "legalEntityRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "marketplaceListingOptional": {
+          "value": true,
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "Access tokens expire after 8 hours when expiration is enabled; refresh tokens expire after 6 months of inactivity.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "Enabling global token expiration requires applications to properly handle refresh tokens.",
+            "claimIds": [
+              "c-create-app"
+            ],
+            "stepId": "configure-redirect"
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Configure expiring tokens and refresh token handling in app settings and code.",
+          "time": {
+            "range": "Immediate",
+            "basis": "official",
+            "startsWhen": "immediately",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "stage2": {
+          "band": "None documented",
+          "summary": "No review required for token policy configuration.",
+          "time": {
+            "range": "None",
+            "basis": "official",
+            "startsWhen": "n/a",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      },
+      "blockerTags": [
+        "none"
+      ],
+      "stage1DoneWhen": {
+        "text": "POST https://github.com/login/oauth/access_token with grant_type=refresh_token returns a new access token successfully.",
+        "claimIds": [
+          "c-create-app"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "provider",
+          "how": "Flags or restricts accounts under review from authorizing third-party applications until reinstated.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "stepIds": [
+        "configure-redirect",
+        "refresh-token-step",
+        "check-token"
+      ],
+      "requirementIds": [
+        "verified-email"
+      ],
+      "limitIds": [
+        "max-apps"
+      ],
+      "blockerIds": [
+        "account-flagged"
+      ],
+      "bottomLine": "GitHub OAuth token revocation and expiration features allow configuring optional token expiration and manual token revocation links.",
+      "topRisks": [
+        "Failing to handle expired access tokens and refresh tokens gracefully in application logic"
+      ]
+    },
+    {
+      "id": "github-org-restrictions",
+      "intent": "Handle organization OAuth app access restrictions and approval requests",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "read:org",
+          "purpose": "Read organization and team membership.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "requiresAppReview": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresSecurityAssessment": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresBusinessVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": []
+        },
+        "paidAccessRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "legalEntityRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "marketplaceListingOptional": {
+          "value": true,
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "Organization access restrictions apply to all members and outside collaborators.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "When organization OAuth app access restrictions are enabled, unapproved apps lose access to private organization resources until approved by an owner.",
+            "claimIds": [
+              "c-create-app"
+            ],
+            "stepId": "request-org-approval"
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Request organization approval from organization owners if OAuth app access restrictions are enabled.",
+          "time": {
+            "range": "Immediate",
+            "basis": "official",
+            "startsWhen": "immediately",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "stage2": {
+          "band": "Instant",
+          "summary": "Organization owners can approve OAuth apps instantly from organization settings.",
+          "time": {
+            "range": "Instant",
+            "basis": "official",
+            "startsWhen": "upon owner approval request",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      },
+      "blockerTags": [
+        "none"
+      ],
+      "stage1DoneWhen": {
+        "text": "GET https://api.github.com/orgs/ORG/members with token returns 200 OK after organization approval.",
+        "claimIds": [
+          "c-create-app"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "provider",
+          "how": "Flags or restricts accounts under review from authorizing third-party applications until reinstated.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "stepIds": [
+        "authorize",
+        "request-org-approval",
+        "check-token"
+      ],
+      "requirementIds": [
+        "verified-email"
+      ],
+      "limitIds": [
+        "max-apps"
+      ],
+      "blockerIds": [
+        "account-flagged"
+      ],
+      "bottomLine": "GitHub organization OAuth access restrictions allow organization owners to control which apps access private organization resources.",
+      "topRisks": [
+        "Apps silently failing to access organization private resources because organization owners have not approved the app"
+      ]
+    },
+    {
+      "id": "github-pkce-flow",
+      "intent": "Implement PKCE secure authorization code flow for public or native clients",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "user:email",
+          "purpose": "Read user email addresses.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "requiresAppReview": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresSecurityAssessment": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresBusinessVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": []
+        },
+        "paidAccessRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "legalEntityRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "marketplaceListingOptional": {
+          "value": true,
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "PKCE is supported for both web and native applications.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "Ensure code_challenge_method is set strictly to S256; plain method is not supported by GitHub.",
+            "claimIds": [
+              "c-create-app"
+            ],
+            "stepId": "authorize-pkce"
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Include code_challenge and code_challenge_method=S256 in the authorize request and code_verifier in the token exchange.",
+          "time": {
+            "range": "Immediate",
+            "basis": "official",
+            "startsWhen": "immediately",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "stage2": {
+          "band": "None documented",
+          "summary": "No review required for PKCE implementation.",
+          "time": {
+            "range": "None",
+            "basis": "official",
+            "startsWhen": "n/a",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      },
+      "blockerTags": [
+        "none"
+      ],
+      "stage1DoneWhen": {
+        "text": "POST https://github.com/login/oauth/access_token with code_verifier successfully returns an access token.",
+        "claimIds": [
+          "c-create-app"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "provider",
+          "how": "Flags or restricts accounts under review from authorizing third-party applications until reinstated.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "stepIds": [
+        "create-app",
+        "authorize-pkce",
+        "exchange-code-pkce",
+        "check-token"
+      ],
+      "requirementIds": [
+        "verified-email"
+      ],
+      "limitIds": [
+        "max-apps"
+      ],
+      "blockerIds": [
+        "account-flagged"
+      ],
+      "bottomLine": "GitHub OAuth PKCE support secures authorization code exchange for public clients without storing client secrets.",
+      "topRisks": [
+        "Using unsupported plain code challenge method instead of S256"
+      ]
+    },
+    {
+      "id": "github-web-application-flow",
+      "intent": "Implement standard web application OAuth authorization code flow",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "repo",
+          "purpose": "Repository access.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": true,
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "requiresAppReview": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresSecurityAssessment": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresBusinessVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "requiresDomainVerification": {
+          "value": false,
+          "claimIds": []
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": []
+        },
+        "paidAccessRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "legalEntityRequired": {
+          "value": false,
+          "claimIds": []
+        },
+        "marketplaceListingOptional": {
+          "value": true,
+          "claimIds": []
+        },
+        "testModeLimits": {
+          "text": "Standard rate limits and token limits apply.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "configGotchas": [
+          {
+            "text": "Always include an unguessable random state parameter to prevent CSRF attacks.",
+            "claimIds": [
+              "c-create-app"
+            ],
+            "stepId": "authorize"
+          }
+        ]
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Instant",
+          "summary": "Redirect users to GitHub authorize endpoint, receive temporary code, and exchange for access token via POST.",
+          "time": {
+            "range": "Immediate",
+            "basis": "official",
+            "startsWhen": "immediately",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        },
+        "stage2": {
+          "band": "None documented",
+          "summary": "No formal review gate for standard web applications.",
+          "time": {
+            "range": "None",
+            "basis": "official",
+            "startsWhen": "n/a",
+            "claimIds": [
+              "c-create-app"
+            ]
+          },
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      },
+      "blockerTags": [
+        "none"
+      ],
+      "stage1DoneWhen": {
+        "text": "GET https://api.github.com/user returns 200 OK with valid token.",
+        "claimIds": [
+          "c-create-app"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "provider",
+          "how": "Flags or restricts accounts under review from authorizing third-party applications until reinstated.",
+          "claimIds": [
+            "c-create-app"
+          ]
+        }
+      ],
+      "stepIds": [
+        "create-app",
+        "configure-redirect",
+        "copy-credentials",
+        "authorize",
+        "exchange-code",
+        "check-token"
+      ],
+      "requirementIds": [
+        "verified-email"
+      ],
+      "limitIds": [
+        "max-apps"
+      ],
+      "blockerIds": [
+        "account-flagged"
+      ],
+      "bottomLine": "GitHub OAuth web application flow provides standard user authorization with scopes, state CSRF protection, and optional offline access.",
+      "topRisks": [
+        "Omitting state parameter exposing application to cross-site request forgery"
+      ]
+    }
+  ],
+  "defaultProfileId": "github-oauth",
+  "steps": [
+    {
+      "id": "create-app",
+      "stage": 1,
+      "title": "Create an OAuth App in GitHub Settings",
+      "owner": "developer",
+      "instructions": [
+        "In the upper-right corner of any page on GitHub, click your profile picture, then click Settings.",
+        "In the left sidebar, click Developer settings, then OAuth apps.",
+        "Click New OAuth App (or Register a new application).",
+        "Type your application name, homepage URL, description, and callback URL.",
+        "Click Register application."
+      ],
+      "links": [
+        {
+          "label": "Creating an OAuth app docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app"
+        }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "configure-redirect",
+      "stage": 1,
+      "title": "Configure Callback URLs and Redirect Rules",
+      "owner": "developer",
+      "instructions": [
+        "Ensure your callback URL matches your application's redirect handler.",
+        "You can enter up to 10 callback URLs or enable wildcard matching if required."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "identity_check",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "copy-credentials",
+      "stage": 1,
+      "title": "Copy Client ID and Client Secret",
+      "owner": "developer",
+      "instructions": [
+        "Copy the generated client ID.",
+        "Generate and copy the client secret and store it securely on your backend server."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "identity_check",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "authorize",
+      "stage": 1,
+      "title": "Send User to GitHub Authorization URL",
+      "owner": "developer",
+      "instructions": [
+        "Redirect your user to https://github.com/login/oauth/authorize with client_id, redirect_uri, scope, state, and optional PKCE parameters.",
+        "Prompt the user to sign in and authorize your application on GitHub."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "exchange-code",
+      "stage": 1,
+      "title": "Exchange Code for Access Token",
+      "owner": "developer",
+      "instructions": [
+        "Receive the temporary code and state parameters at your redirect URI, verifying that state matches.",
+        "Send a POST request to https://github.com/login/oauth/access_token with client_id, client_secret, code, and redirect_uri, setting Accept: application/json.",
+        "Store the returned access_token securely."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "identity_check",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "check-token",
+      "stage": 1,
+      "title": "Verify Token with API Call",
+      "owner": "developer",
+      "instructions": [
+        "Send a GET request to https://api.github.com/user with header Authorization: Bearer ACCESS_TOKEN.",
+        "Confirm a 200 OK response containing the authenticated user's profile details."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "identity_check",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "request-device-code",
+      "stage": 1,
+      "title": "Request Device and User Codes",
+      "owner": "developer",
+      "instructions": [
+        "Send a POST request to https://github.com/login/device/code with client_id and requested scopes.",
+        "Receive device_code, user_code, verification_uri, and interval."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "identity_check",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "prompt-user-device",
+      "stage": 1,
+      "title": "Prompt User to Authorize Device Code",
+      "owner": "developer",
+      "instructions": [
+        "Display user_code and direct the user to enter the code at https://github.com/login/device."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "device-poll",
+      "stage": 1,
+      "title": "Poll for Device Access Token",
+      "owner": "developer",
+      "instructions": [
+        "Poll POST https://github.com/login/oauth/access_token using client_id, device_code, and grant_type=urn:ietf:params:oauth:grant-type:device_code at the specified interval."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "identity_check",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "authorize-pkce",
+      "stage": 1,
+      "title": "Authorize with PKCE Parameters",
+      "owner": "developer",
+      "instructions": [
+        "Generate a code verifier and compute its S256 code challenge. Include code_challenge and code_challenge_method=S256 in the authorize request."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "exchange-code-pkce",
+      "stage": 1,
+      "title": "Exchange Code with Code Verifier",
+      "owner": "developer",
+      "instructions": [
+        "Exchange the authorization code and original code_verifier for an access token at POST https://github.com/login/oauth/access_token."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "identity_check",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "refresh-token-step",
+      "stage": 1,
+      "title": "Refresh Access Token Using Refresh Token",
+      "owner": "developer",
+      "instructions": [
+        "Send a POST request to https://github.com/login/oauth/access_token with grant_type=refresh_token, client_id, client_secret, and refresh_token."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "identity_check",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "request-org-approval",
+      "stage": 2,
+      "title": "Request Organization Owner Approval for App Access",
+      "owner": "developer",
+      "instructions": [
+        "If organization OAuth app access restrictions are enabled, request organization owner approval for the OAuth app in organization settings."
+      ],
+      "links": [
+        {
+          "label": "Authorizing OAuth apps docs",
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps"
+        }
+      ],
+      "humanGate": "two_factor",
+      "agentMarkBasis": "expected_from_docs",
+      "uiLabelsMayBeStale": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "verified-email",
+      "label": "Verified Email Address",
+      "detail": "You must verify your email address before you can authorize an OAuth app.",
+      "howToPrepare": "Go to GitHub account settings and verify your email address.",
+      "agentCanDraft": false,
+      "claimIds": [
+        "c-create-app"
+      ]
+    }
+  ],
+  "limits": [
+    {
+      "id": "max-apps",
+      "what": "OAuth app creation limit",
+      "value": "Up to 100 OAuth apps per user or organization",
+      "whenHit": "Cannot create additional OAuth apps until existing ones are deleted.",
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "token-rate-limit",
+      "what": "Token creation rate limit",
+      "value": "10 tokens created per hour per user/app/scope combination",
+      "whenHit": "Triggers a re-authorization browser prompt.",
+      "claimIds": [
+        "c-create-app"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "id": "account-flagged",
+      "symptom": "\\\"This account is flagged, and therefore cannot authorize a third party application\\\" error during authorization",
+      "cause": "The user account has a restriction or is under review",
+      "fix": "Appeal the restriction through GitHub support or account reinstatement before authorizing apps",
+      "claimIds": [
+        "c-create-app"
+      ]
+    }
+  ],
+  "nuances": [
+    {
+      "id": "email-verify-nuance",
+      "text": "You must verify your email address on GitHub before you can authorize any OAuth app.",
+      "claimIds": [
+        "c-create-app"
+      ]
+    },
+    {
+      "id": "pkce-nuance",
+      "text": "GitHub requires code_challenge_method=S256 if PKCE is used; plain code challenge is not supported.",
+      "claimIds": [
+        "c-create-app"
+      ]
+    }
+  ],
+  "notFound": [
+    {
+      "item": "Exact production review timelines or approval gating policies for public OAuth app distribution",
+      "why": "GitHub OAuth apps are created entirely self-serve without a mandatory submission or verification review gate for general public use.",
+      "claimIds": []
+    }
+  ],
+  "claims": [
+    {
+      "id": "c-create-app",
+      "statement": "A user or organization can own up to 100 OAuth apps.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+          "title": "Creating an OAuth app",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-25",
+          "quote": "A user or organization can own up to 100 OAuth apps."
+        }
+      ]
+    }
+  ]
+}
