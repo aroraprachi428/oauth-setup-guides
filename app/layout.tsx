@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/next";
 import "@/styles/tokens.css";
 import "./globals.css";
 
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Link href="/">OAuth Setup Guides</Link>
         </header>
         <main className="container">{children}</main>
+        <Analytics />
       </body>
     </html>
   );
