@@ -1,0 +1,215 @@
+{
+  "slug": "pokemon-go",
+  "app": {
+    "name": "Pokémon GO",
+    "website": "https://pokemongolive.com",
+    "category": "Gaming",
+    "developerPortalUrl": "https://nianticlabs.com",
+    "primaryDocsUrl": "https://nianticlabs.com/terms"
+  },
+  "source": "generated",
+  "generator": {
+    "model": "gemini-3.5-flash",
+    "jobId": "92b61ab7-8d46-4c69-ba91-7d7b48b6f4ee",
+    "generatedAt": "2026-10-28"
+  },
+  "version": 1,
+  "lastVerified": "2026-10-28",
+  "oauthSupport": "none",
+  "technical": {
+    "oauthVersion": "2.0",
+    "pkce": "unknown",
+    "clientSecretHandling": "Pokémon GO does not provide a public OAuth API or client registration.",
+    "refreshTokens": {
+      "supported": false
+    },
+    "redirectUriRules": [],
+    "claimIds": [
+      "c-no-oauth"
+    ]
+  },
+  "profiles": [
+    {
+      "id": "no-oauth",
+      "intent": "Integrate with Pokémon GO user accounts or game data via OAuth",
+      "audience": "public_multi_tenant",
+      "scopes": [
+        {
+          "name": "none",
+          "purpose": "Pokémon GO does not provide any public API scopes or OAuth authorization.",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        }
+      ],
+      "facts": {
+        "selfServeCreation": {
+          "value": false,
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "requiresAppReview": {
+          "value": "not_mentioned",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "requiresSecurityAssessment": {
+          "value": "not_mentioned",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "requiresBusinessVerification": {
+          "value": "not_mentioned",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "requiresDomainVerification": {
+          "value": "not_mentioned",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "partnerProgramGated": {
+          "value": false,
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "paidAccessRequired": {
+          "value": "not_mentioned",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "legalEntityRequired": {
+          "value": "not_mentioned",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "marketplaceListingOptional": {
+          "value": "not_mentioned",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "testModeLimits": {
+          "text": "No developer test environment or public API exists.",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "configGotchas": []
+      },
+      "verdict": {
+        "stage1": {
+          "band": "Gated",
+          "summary": "Pokémon GO does not offer a public OAuth API or developer platform for third-party integration.",
+          "time": {
+            "range": null,
+            "basis": "official",
+            "startsWhen": "N/A",
+            "claimIds": [
+              "c-no-oauth"
+            ]
+          },
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        },
+        "stage2": {
+          "band": "Gated",
+          "summary": "No public developer program or API access exists for Pokémon GO.",
+          "time": {
+            "range": null,
+            "basis": "official",
+            "startsWhen": "N/A",
+            "claimIds": [
+              "c-no-oauth"
+            ]
+          },
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        }
+      },
+      "blockerTags": [
+        "partner_approval"
+      ],
+      "stage1DoneWhen": {
+        "text": "N/A - Pokémon GO does not offer an official public OAuth API.",
+        "claimIds": [
+          "c-no-oauth"
+        ]
+      },
+      "blockedBy": [
+        {
+          "party": "provider",
+          "how": "Pokémon GO does not offer a public developer API or third-party OAuth access.",
+          "claimIds": [
+            "c-no-oauth"
+          ]
+        }
+      ],
+      "stepIds": [
+        "no-public-oauth"
+      ],
+      "requirementIds": [],
+      "limitIds": [],
+      "blockerIds": [],
+      "bottomLine": "Pokémon GO does not provide a public OAuth 2.0 API or developer portal. Accessing game accounts or servers through unofficial third-party software is prohibited by the Terms of Service.",
+      "topRisks": [
+        "Using unauthorized third-party software or reverse-engineered APIs violates the Terms of Service and can lead to account termination."
+      ]
+    }
+  ],
+  "defaultProfileId": "no-oauth",
+  "steps": [
+    {
+      "id": "no-public-oauth",
+      "stage": 1,
+      "title": "No official OAuth API available",
+      "owner": "provider",
+      "instructions": [
+        "Pokémon GO does not offer an official public OAuth 2.0 developer API or third-party developer portal.",
+        "Accessing Pokémon GO services through modified or unofficial third-party software violates Section 3.1 and Section 6 of the Terms of Service."
+      ],
+      "links": [
+        {
+          "label": "Niantic Terms of Service",
+          "url": "https://nianticlabs.com/terms"
+        }
+      ],
+      "agentMarkBasis": "expected_from_docs",
+      "claimIds": [
+        "c-no-oauth"
+      ]
+    }
+  ],
+  "requirements": [],
+  "limits": [],
+  "blockers": [],
+  "nuances": [],
+  "notFound": [],
+  "claims": [
+    {
+      "id": "c-no-oauth",
+      "statement": "Accessing Pokémon GO or related services through modified or unofficial third-party software is prohibited under the Terms of Service.",
+      "label": "verified",
+      "sources": [
+        {
+          "url": "https://nianticlabs.com/terms",
+          "title": "Scopely Explore Terms of Service",
+          "kind": "official",
+          "read": "full",
+          "retrievedAt": "2026-10-28",
+          "quote": "Accessing Services in an unauthorized manner (including using modified or unofficial third party software)"
+        }
+      ]
+    }
+  ]
+}
