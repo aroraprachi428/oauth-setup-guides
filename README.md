@@ -62,7 +62,7 @@ Add "Notion" → job queued → chunks of agent work → checks → published (d
   - the provider's own endpoints (`llms.txt`, sitemaps, OAuth discovery);
   - links in the pages it reads;
   - docs URLs it already knows, which only count once actually fetched;
-  - an optional Tavily search fallback, capped at 6 searches per run.
+  - an optional Tavily search fallback, offered only when a run is slow (after 1 minute of work or 10 model turns) and capped at 6 searches per run.
 - **Safe fetching:** HTTPS GET only, no cookies, and private or local addresses are refused at DNS lookup. Size, redirects and wait time are capped, and fetched pages are passed to the model as untrusted data.
 - **Serverless-sized chunks:** Vercel Hobby stops a function after 300 seconds. So a run is split into chunks, saved to the database in between, and each chunk triggers the next.
   - No new model call starts after 2 minutes in a chunk.

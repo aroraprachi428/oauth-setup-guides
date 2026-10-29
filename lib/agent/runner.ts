@@ -18,6 +18,10 @@ export type RunLimits = {
   maxTokens: number;
   maxTurns: number;
   maxSearches?: number;
+  /** Web search is offered only once a run is slow: after this much working time or this many
+   * turns, whichever comes first. Leave both unset to offer it from the start. */
+  searchAfterMs?: number;
+  searchAfterTurns?: number;
   /** Docs pages code reads before the first model call (0 or unset: none). */
   prefetchPages?: number;
 };
@@ -33,6 +37,10 @@ export const DEFAULT_LIMITS: RunLimits = {
   maxTurns: 80,
   // Search is a fallback with a small free monthly quota: keep it to a few calls per guide.
   maxSearches: 6,
+  // Quick runs finish in under a minute from the provider's own docs. Search (a small free
+  // monthly quota) is held back for the slower ones.
+  searchAfterMs: 60_000,
+  searchAfterTurns: 10,
   // Reading the likely OAuth pages up front saves the model several fetch turns.
   prefetchPages: 4,
 };
@@ -48,6 +56,8 @@ export type RunState = {
   searchCount?: number;
   /** Set once provider_endpoints or fetch has been used; search is a fallback after that. */
   docsChecked?: boolean;
+  /** Set once the run is slow enough for web search to be offered (see RunLimits). */
+  searchUnlocked?: boolean;
   tokens: number;
   turns: number;
   elapsedMs: number;
@@ -75,6 +85,8 @@ const MAX_QUERY_WORDS = 8;
 const MAX_URLS_PER_FETCH = 5;
 const CLEAN = "No problems.";
 const SKIPPED = "not run: this step ran out of time; call it again";
+const SEARCH_UNLOCKED =
+  "Note: this research is taking longer than usual, so a web search tool is now available. Use it if the official pages you need are hard to reach, or to find community reports on review times and problems.";
 
 const DRAFT_KEYS = new Set([
   "app", "oauthSupport", "technical", "profiles", "defaultProfileId", "steps", "requirements",
@@ -125,7 +137,7 @@ function tools(withSearch: boolean): ToolDef[] {
   if (withSearch) {
     list.unshift({
       name: "search",
-      description: "Web search, a limited fallback. Use only when provider_endpoints and known docs URLs don't lead to the pages you need, or to look for community reports (forums, issues) about review times and problems. Results only point to pages; fetch a page before relying on it.",
+      description: "Web search, offered because this research is taking longer than usual. Use it to find the official docs pages you haven't reached, or community reports (forums, issues) about review times and problems. Results only point to pages; fetch a page before relying on it.",
       parameters: { type: "object", properties: { query: { type: "string" } }, required: ["query"] },
     });
   }
@@ -160,7 +172,10 @@ export async function runChunk(input: RunState, deps: ChunkDeps, limits: RunLimi
   const chunkStart = now();
   const startElapsed = state.elapsedMs;
   const fetcher = createFetcher({ transport: deps.transport, maxFetches: limits.maxFetches, seed: { log: state.fetchLog, count: state.fetchCount } });
-  const toolDefs = tools(deps.search !== null);
+  const slow = () =>
+    (limits.searchAfterMs === undefined && limits.searchAfterTurns === undefined) ||
+    (limits.searchAfterMs !== undefined && state.elapsedMs >= limits.searchAfterMs) ||
+    (limits.searchAfterTurns !== undefined && state.turns >= limits.searchAfterTurns);
   const system = systemPrompt();
   const sync = () => {
     state.fetchLog = [...fetcher.log];
@@ -217,7 +232,7 @@ export async function runChunk(input: RunState, deps: ChunkDeps, limits: RunLimi
     const args = tc.args ?? {};
     switch (tc.name) {
       case "search": {
-        if (!deps.search) return "error: no search tool is configured";
+        if (!deps.search || !state.searchUnlocked) return "error: no search tool is available";
         const q = String(args.query ?? "").trim().slice(0, 300);
         if (q.split(/\s+/).length > MAX_QUERY_WORDS) return `error: keep search queries short (3-6 words), e.g. "${state.appName} OAuth app"`;
         // One search may find the docs host; after that, the provider's own docs come first.
@@ -289,9 +304,17 @@ export async function runChunk(input: RunState, deps: ChunkDeps, limits: RunLimi
     if (state.turns >= limits.maxTurns) return { state: { ...state, limitReason: "turn limit reached" }, outcome: "limit" };
     if (now() - chunkStart >= limits.chunkMs) return { state, outcome: "continue" };
 
+    // Search is offered from the turn the run becomes slow; the model is told why in the last reply.
+    if (deps.search && !state.searchUnlocked && slow()) {
+      state.searchUnlocked = true;
+      const last = state.messages.at(-1);
+      if (state.turns > 0 && last) last.content += `\n\n${SEARCH_UNLOCKED}`;
+      if (state.turns > 0) await deps.onEvent("Taking longer than usual: web search is now available");
+    }
+
     let turn;
     try {
-      turn = await deps.model.complete(system, state.messages, toolDefs);
+      turn = await deps.model.complete(system, state.messages, tools(Boolean(deps.search && state.searchUnlocked)));
     } catch (e) {
       sync();
       if (e instanceof RateLimitError) return { state, outcome: "rate_limited", retryAfterMs: e.retryAfterMs, daily: e.daily };
