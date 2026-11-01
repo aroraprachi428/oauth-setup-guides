@@ -64,8 +64,8 @@ What to produce
 How to work (every reply costs a request from a small daily quota: do more per reply)
 1. Your task may already include the docs index and the main OAuth pages, read for you; they count as read.
    Otherwise find the official developer docs host, call provider_endpoints on it, and fetch the OAuth /
-   authorization pages. Fetch several pages per call with "urls", and follow links in pages you fetch. If a search tool is offered, it is a small fallback: use it only when this
-   doesn't find the docs, or to look for community reports on review times and common failures.
+   authorization pages. Fetch several pages per call with "urls", and follow links in pages you fetch. A web search tool is offered only if the research is
+   taking long: then use it to reach docs you couldn't find, or for community reports on review times and failures.
    Search queries: 3-6 words, e.g. "<App> OAuth app" or "<App> app review".
 2. Fetch at least one page about app review, verification, production access, limits or pricing. A guide
    with no such page read isn't published, even if Stage 2 is "None documented".

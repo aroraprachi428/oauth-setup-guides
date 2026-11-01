@@ -246,3 +246,67 @@ describe("chunk time budget", () => {
     expect(reply).toContain('<page_error url="https://example.com/b">not run: this step ran out of time; call it again</page_error>');
   });
 });
+
+describe("search only for slow runs", () => {
+  const search = { search: async () => [{ title: "Docs", url: "https://a.example/docs", snippet: "" }] };
+  const gated = { ...limits, searchAfterMs: 3 * 60_000, searchAfterTurns: 2 };
+  const offered = (m: ReturnType<typeof fakeModel>, i: number) => m.seen[i].tools.some((t) => t.name === "search");
+
+  it("isn't offered to a run that's going quickly", async () => {
+    const model = fakeModel([
+      { toolCalls: [call("provider_endpoints", { host: "a.example" })] },
+      { toolCalls: [call("submit_guide")] },
+    ]);
+    await runChunk(newRunState("add", "X", "x"), { model, transport, search, onEvent: () => {}, now: clock().now }, gated);
+    expect(offered(model, 0)).toBe(false);
+    expect(offered(model, 1)).toBe(false);
+  });
+
+  it("is offered after enough turns, and the model is told why", async () => {
+    const events: string[] = [];
+    const model = fakeModel([
+      { toolCalls: [call("provider_endpoints", { host: "a.example" })] },
+      { toolCalls: [call("provider_endpoints", { host: "b.example" })] },
+      { toolCalls: [call("search", { query: "X OAuth app" })] },
+      { toolCalls: [call("submit_guide")] },
+    ]);
+    const out = await runChunk(newRunState("add", "X", "x"), { model, transport, search, onEvent: (m) => { events.push(m); }, now: clock().now }, gated);
+    expect([0, 1, 2].map((i) => offered(model, i))).toEqual([false, false, true]);
+    expect(model.seen[2].messages.at(-1)!.content).toMatch(/taking longer than usual, so a web search tool is now available/);
+    expect(events).toContain("Taking longer than usual: web search is now available");
+    expect(out.state.searchCount).toBe(1);
+  });
+
+  it("is offered once the run has been working long enough", async () => {
+    const c = clock();
+    const model = fakeModel([
+      () => {
+        c.advance(4 * 60_000);
+        return { toolCalls: [call("provider_endpoints", { host: "a.example" })] };
+      },
+      { toolCalls: [call("submit_guide")] },
+    ]);
+    await runChunk(newRunState("add", "X", "x"), { model, transport, search, onEvent: () => {}, now: c.now }, { ...gated, searchAfterTurns: 99, chunkMs: 60 * 60_000, toolCutoffMs: undefined });
+    expect([0, 1].map((i) => offered(model, i))).toEqual([false, true]);
+  });
+
+  it("refuses a search call before it's offered", async () => {
+    const model = fakeModel([
+      { toolCalls: [call("search", { query: "X OAuth app" })] },
+      { toolCalls: [call("submit_guide")] },
+    ]);
+    const out = await runChunk(newRunState("add", "X", "x"), { model, transport, search, onEvent: () => {}, now: clock().now }, gated);
+    expect(model.seen[1].messages.at(-1)!.content).toBe("error: no search tool is available");
+    expect(out.state.searchCount ?? 0).toBe(0);
+  });
+
+  it("is never offered without a search key", async () => {
+    const model = fakeModel([
+      { toolCalls: [call("provider_endpoints", { host: "a.example" })] },
+      { toolCalls: [call("provider_endpoints", { host: "b.example" })] },
+      { toolCalls: [call("submit_guide")] },
+    ]);
+    await runChunk(newRunState("add", "X", "x"), { model, transport, search: null, onEvent: () => {}, now: clock().now }, gated);
+    expect(offered(model, 2)).toBe(false);
+  });
+});
